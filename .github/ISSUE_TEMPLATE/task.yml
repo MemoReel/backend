@@ -1,0 +1,54 @@
+name: 📋 작업 (Task)
+description: 기능 개발, 개선 등 일반 작업 단위를 정의합니다.
+title: "[Task] "
+labels: ["task"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        진행할 작업을 정의합니다. 무엇을, 왜 하는지와 완료 기준을 명확히 적어주세요.
+
+  - type: textarea
+    id: background
+    attributes:
+      label: 작업 내용 / 배경
+      description: 무엇을 하는 작업인지, 왜 필요한지 적어주세요.
+      placeholder: 예) 메모 CRUD API를 구현한다. 앱에서 메모를 저장/조회할 수 있어야 한다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: todo
+    attributes:
+      label: 할 일
+      description: 세부 작업을 체크리스트로 나눠 주세요.
+      placeholder: |
+        - [ ] Memo 엔티티 작성
+        - [ ] Repository / Service 작성
+        - [ ] Controller + DTO 작성
+        - [ ] 테스트 작성
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: dod
+    attributes:
+      label: 완료 조건 (DoD)
+      description: 이 작업이 "끝났다"고 판단할 기준을 적어주세요.
+      placeholder: |
+        - 모든 체크리스트 완료
+        - 테스트 통과
+        - 코드 리뷰 승인
+    validations:
+      required: true
+
+  - type: textarea
+    id: refs
+    attributes:
+      label: 참고
+      description: 관련 이슈, 문서, 링크 등을 적어주세요.
+    validations:
+      required: false
