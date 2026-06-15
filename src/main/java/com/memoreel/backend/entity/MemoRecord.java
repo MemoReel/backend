@@ -33,8 +33,9 @@ public class MemoRecord extends BaseTimeEntity {
     @JoinColumn(name = "song_id", nullable = false)
     private Song song;
 
-    @Column(name = "photo_url", nullable = false, length = 512)
-    private String photoUrl;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "photo_id", nullable = false)
+    private Photo photo;
 
     @Column(name = "location_lat", precision = 10, scale = 7)
     private BigDecimal locationLat;
@@ -46,11 +47,11 @@ public class MemoRecord extends BaseTimeEntity {
     private String locationLabel;
 
     @Builder
-    public MemoRecord(User user, Song song, String photoUrl,
+    public MemoRecord(User user, Song song, Photo photo,
                       BigDecimal locationLat, BigDecimal locationLng, String locationLabel) {
         this.user = user;
         this.song = song;
-        this.photoUrl = photoUrl;
+        this.photo = photo;
         this.locationLat = locationLat;
         this.locationLng = locationLng;
         this.locationLabel = locationLabel;
