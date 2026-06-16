@@ -32,4 +32,11 @@ public class User extends BaseTimeEntity {
         this.deviceId = deviceId;
         this.nickname = nickname;
     }
+
+    /**
+     * 닉네임 없이 가입한 경우, 저장 후 생성된 id 기반 기본 닉네임을 부여한다.
+     */
+    public void assignDefaultNickname(String nickname) {
+        this.nickname = nickname;
+    }
 }
