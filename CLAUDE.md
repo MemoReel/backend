@@ -81,7 +81,7 @@ Conventional Commits (`<type>: <Korean subject>`).
 **Run `./gradlew harness` before every commit and push, and confirm it passes.**
 - pre-commit: `spotlessCheck`
 - pre-push: `harness`
-- CI (`.github/workflows/validate.yml`): runs `harness` on PRs and pushes to `main`
+- CI (`.github/workflows/harness.yml`): runs `harness` on PRs and pushes to `main`
 
 ## Slash Commands (`.claude/commands/`)
 

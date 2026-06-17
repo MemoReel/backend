@@ -11,7 +11,7 @@ This skill manages and updates the harness engineering infrastructure.
 | `src/test/java/com/memoreel/backend/architecture/*.java` | ArchUnit architecture tests |
 | `build.gradle` (Spotless/ArchUnit dependencies and tasks) | Formatter, architecture, and harness task definitions |
 | `.githooks/pre-commit`, `.githooks/pre-push` | Git hooks |
-| `.github/workflows/validate.yml` | CI workflow |
+| `.github/workflows/harness.yml` | CI workflow |
 | `CONTRIBUTING.md` | Guide for external contributors |
 
 ## Procedure
@@ -49,7 +49,7 @@ Branch by request type:
 3. If needed, update Spotless options or ArchUnit tests as well.
 
 #### Modify Git Hooks / CI
-1. Update `.githooks/*` or `.github/workflows/validate.yml`.
+1. Update `.githooks/*` or `.github/workflows/harness.yml`.
 2. Synchronize local setup instructions in `CONTRIBUTING.md`.
 3. When changing CI triggers such as branches or events, call that out explicitly in the PR notes.
 

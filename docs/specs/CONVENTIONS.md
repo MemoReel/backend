@@ -91,5 +91,5 @@ Commit: `<type>: <Korean subject>` (Conventional Commits)
 
 ## 10. CI
 
-- `.github/workflows/validate.yml` runs `./gradlew harness` automatically on PRs and pushes to `main`.
+- `.github/workflows/harness.yml` runs `./gradlew harness` automatically on PRs and pushes to `main`.
 - On failure, Spotless and test reports are uploaded as artifacts.
