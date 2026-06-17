@@ -1,62 +1,63 @@
 ---
 name: debug-and-verify-locally
-description: 이 레포에서 발생한 버그, 에러 응답, 예상치 못한 동작을 디버깅할 때 사용한다. 사용자가 "안 돼", "에러 떠", "이상해", "왜 이래", "디버깅 해줘", "확인해줘" 같은 말을 하거나, 로컬·운영 환경에서 특정 엔드포인트가 동작하지 않는다고 보고할 때 반드시 트리거. 추측 대신 직접 ./gradlew bootRun 으로 서버를 띄우고 curl/로그로 증거를 수집해서 가설을 검증한 뒤 수정하고, 수정 후에도 다시 띄워서 동작을 확인하는 작업 방식을 강제한다. ArgumentResolver, 인증(X-Device-Id), GlobalExceptionHandler, JPA 매핑 같이 "코드만 봐서는 동작을 알기 어려운" 영역일수록 우선 적용.
+description: Use this skill when debugging bugs, error responses, or unexpected behavior in this repository. It must trigger when the user says something like "it does not work", "there is an error", "this is weird", "why is this happening", "debug this", or "please check this", or when the user reports that a specific endpoint does not work in local or production environments. Instead of guessing, start the server with ./gradlew bootRun, collect evidence with curl and logs, validate a hypothesis, then modify the code. After the fix, start the server again and verify the behavior. Apply this especially to areas where behavior cannot be inferred reliably from code alone, such as ArgumentResolver, authentication (X-Device-Id), GlobalExceptionHandler, and JPA mappings.
 ---
 
 # Debug and Verify Locally
 
-이 레포의 버그를 추적할 때 따르는 작업 방식. 핵심은 **추측 금지 → 직접 실행해서 증거 수집 → 가설 검증 후에만 수정 → 수정 후 다시 검증**이다.
+Follow this workflow when investigating bugs in this repository. The core rule is: **do not guess -> run the system and collect evidence -> change code only after validating a hypothesis -> verify again after the fix**.
 
-## 1. 언제 쓰는가
+## 1. When to Use This
 
-- 사용자가 특정 엔드포인트가 안 된다고 보고할 때 (`/users`, `/me`, 추천/저장 API 등)
-- 에러 응답을 들고 와서 원인을 묻거나 고쳐달라고 할 때 (`status:500`, `401 UNAUTHORIZED`, `400 VALIDATION_ERROR`, JPA `ConstraintViolation` 등)
-- 동작이 코드와 다르게 보이는 모든 경우 (ArgumentResolver, 예외 핸들러, JPA fetch/lazy 등 우회로가 많은 영역)
-- "왜 이래" / "이상하다" 류 모호한 보고
+- The user reports that a specific endpoint does not work, such as `/users`, `/me`, recommendation APIs, or saved-track APIs.
+- The user provides an error response and asks for the cause or a fix, such as `status:500`, `401 UNAUTHORIZED`, `400 VALIDATION_ERROR`, or a JPA `ConstraintViolation`.
+- Runtime behavior appears different from the code, especially in areas with indirect control flow such as `ArgumentResolver`, exception handlers, or JPA fetch/lazy behavior.
+- The report is vague, such as "why is this happening" or "this is weird".
 
-## 2. 작업 순서
+## 2. Workflow
 
-다음 순서를 깨면 거의 항상 잘못된 곳을 고치게 된다.
+If you skip this order, you will usually fix the wrong thing.
 
-### Step 1. 증상을 사용자 말로 한 번 더 명확히 잡는다
+### Step 1. Restate the Symptom Precisely
 
-"접속이 안 된다"는 말이 의미하는 것:
-- 401? 500? 응답 body가 이상? 부팅 자체가 실패?
-- 어떤 입력에서? 어떤 환경(dev/prod)에서?
+Clarify what "cannot connect" or "does not work" means:
+- Is it a 401, a 500, a strange response body, or a startup failure?
+- Which input triggers it?
+- Which environment is affected, dev or prod?
 
-추측이 갈리는 단어가 있으면 사용자에게 한 줄로 물어본다. 단, 사용자에게 묻기 전에 코드 1~2분 훑어서 후보를 좁힌 다음 묻는다. 빈손으로 묻지 않는다.
+If a word can mean multiple things, ask the user one concise question. Before asking, inspect the code for 1-2 minutes to narrow the candidates. Do not ask empty-handed.
 
-### Step 2. 관련 코드와 git 히스토리를 먼저 본다
+### Step 2. Read the Related Code and Git History First
 
-- 관련 파일을 읽는다 (Controller, Service, `GlobalExceptionHandler`, `application-*.yml`, `WebConfig`, `DeviceIdArgumentResolver`)
-- `git log --oneline -20` 그리고 해당 영역에 최근 손댄 커밋의 diff를 본다 — **버그는 보통 마지막에 손댄 곳에 있다**
-- 최근에 추가된 catch-all 예외 핸들러, 새로 켠 인증/필터, 변경된 라우팅이 자주 범인
+- Read related files: controller, service, `GlobalExceptionHandler`, `application-*.yml`, `WebConfig`, and `DeviceIdArgumentResolver`.
+- Run `git log --oneline -20`, then inspect diffs for recent commits that touched the affected area. Bugs usually live where the code changed most recently.
+- Common culprits are newly added catch-all exception handlers, newly enabled authentication or filters, and changed routing.
 
-### Step 3. 직접 서버를 띄워 증거를 모은다
+### Step 3. Start the Server and Collect Evidence
 
-코드만 보고 결론 내지 않는다. 직접 띄운다.
+Do not conclude from code alone. Run the server directly.
 
 ```bash
 ./gradlew bootRun
 ```
 
-백그라운드로 띄우되 부팅 완료를 명확히 기다린다 (`Started BackendApplication` / `APPLICATION FAILED TO START` / `BUILD FAILED` 셋 중 하나가 나올 때까지 polling).
+Run it in the background, but wait explicitly until one of these outcomes appears: `Started BackendApplication`, `APPLICATION FAILED TO START`, or `BUILD FAILED`.
 
-포트 충돌(8080 already in use)이 나면 사용자에게 끄도록 요청한다. 사용자가 띄워둔 서버를 마음대로 죽이지 않는다.
+If port 8080 is already in use, ask the user to stop the existing process. Do not kill a server that the user may have started.
 
-dev 프로필은 로컬 MySQL(root/12345678, DB `memoreel`)을 기대한다. MySQL이 안 떠있으면 부팅이 실패하니 먼저 확인:
+The dev profile expects local MySQL (root/12345678, DB `memoreel`). If MySQL is not running, startup will fail, so check it first:
 
 ```bash
 mysql -uroot -p12345678 -h127.0.0.1 -e "SHOW DATABASES LIKE 'memoreel';"
 ```
 
-### Step 4. curl로 요청을 흘려보고 실제 응답을 본다
+### Step 4. Send Requests with curl and Inspect Actual Responses
 
 ```bash
-# 단일 요청 응답 + 상태코드
+# Single request response + status code
 curl -s -i http://localhost:8080/me -H "X-Device-Id: dev-001" | head -20
 
-# JSON 본문
+# JSON body
 curl -s -X POST http://localhost:8080/users \
   -H "X-Device-Id: dev-001" \
   -H "Content-Type: application/json" \
@@ -64,55 +65,55 @@ curl -s -X POST http://localhost:8080/users \
   -w "\nHTTP %{http_code}\n"
 ```
 
-스펙(`docs/`)이 정의한 응답 포맷(snake_case, `ok`/`data`/`error`)과 실제 응답을 줄별로 대조한다. `default-property-inclusion: non_null` 설정 때문에 null 필드는 응답에서 빠지는 게 정상.
+Compare the actual response line by line with the response format defined in `docs/`: snake_case and `ok`/`data`/`error`. Because `default-property-inclusion: non_null` is enabled, null fields are expected to be omitted.
 
-### Step 5. 가설을 한 줄로 적고 그 가설만 검증한다
+### Step 5. Write One Hypothesis and Validate Only That Hypothesis
 
-좋은 가설은 이렇게 생겼다: **"X가 Y를 일으킨다, 왜냐하면 Z이기 때문이다."**
+A good hypothesis looks like this: **"X causes Y because Z."**
 
-- 가설 검증 전에는 코드 안 고친다
-- 한 번에 한 가설씩 — 여러 곳을 동시에 고치면 무엇이 효과 있었는지 모른다
-- 빗나가면 새 가설로 돌아간다. "한 번만 더 시도" 금지
+- Do not edit code before validating the hypothesis.
+- Validate one hypothesis at a time. If you change several things at once, you cannot know what worked.
+- If the hypothesis is wrong, go back and form a new one. Do not keep trying random changes.
 
-### Step 6. 수정 후 반드시 다시 띄워서 검증한다
+### Step 6. After the Fix, Restart and Verify Again
 
-빌드가 통과한다는 것은 "동작한다"는 뜻이 아니다.
+A passing build does not mean the behavior works.
 
-- 코드 수정
-- 띄워둔 서버 종료 후 재기동 (`./gradlew bootRun`)
-- 같은 curl 시나리오로 다시 응답 확인
-- **"이전 검증 단계와 동일하거나 더 좋아졌는가"** 가 통과 기준
-- 서버 로그도 같이: stack trace, `Caused by:`, JPA `SQL warning` 등이 새로 찍히지 않는지
+- Modify the code.
+- Stop the running server and restart it with `./gradlew bootRun`.
+- Run the same curl scenario again and inspect the response.
+- The pass criterion is: **the result is the same as or better than the previous verification step**.
+- Check server logs as well: stack traces, `Caused by:`, and JPA `SQL warning` messages must not newly appear.
 
-### Step 7. 보고는 검증 결과로 한다
+### Step 7. Report Verified Results
 
-- "고쳤습니다"가 아니라 **"`POST /users` → 201 + `data.user.id` 정상, MySQL `users` row 확인"** 같이 검증한 사실을 말한다
-- 응답 자체가 200/201/204 정상인지 직접 본다 — catch-all 핸들러가 500을 200으로 가리는 경우 있음
-- 사용자 환경에서 한 번 더 확인 요청할 때는 무엇을 어떻게 확인해야 하는지 명시
+- Do not just say "fixed." Report the evidence, such as **"`POST /users` -> 201, `data.user.id` is present, and the row exists in MySQL `users`."**
+- Inspect the response status and body directly. A catch-all handler can hide a 500 behind an incorrect 200.
+- When asking the user to verify in their environment, state exactly what to check and how.
 
-### Step 8. 사이드 이슈는 분리한다
+### Step 8. Separate Side Issues
 
-디버깅 중에 발견한 별개 문제는 **현재 PR 범위 밖**으로 빼고 별도 이슈로 안내한다.
+If debugging reveals a separate problem, keep it outside the current PR scope and suggest tracking it separately.
 
-## 3. 자주 빠지는 함정
+## 3. Common Traps
 
-| 함정 | 왜 안 좋은가 | 대안 |
+| Trap | Why It Is Bad | Alternative |
 |---|---|---|
-| "에러 로그 안 떴으니 해결" | 200 OK 가 아닐 수도 있다 (catch-all 핸들러가 삼킴) | 응답 코드와 body까지 직접 확인 |
-| 옵션 A·B 왔다갔다 | 가설 검증 없이 코드부터 만지면 어디서 풀렸는지 모름 | 한 가설씩 검증, 결정적 증거 후 적용 |
-| `ddl-auto: update`로 스키마 변경 반영 안 됨 | Hibernate가 컬럼 추가는 해도 인덱스·FK 변경은 못 따라감 | `DROP DATABASE memoreel; CREATE DATABASE memoreel;` 후 재기동 |
-| 테스트는 통과하는데 dev는 깨짐 | test는 H2 + `profiles.active=test`, dev는 MySQL — Dialect/방언 차이 | 둘 다 직접 띄워서 확인 |
-| pre-commit/pre-push가 안 도는데 머지 후 CI에서 깨짐 | `./gradlew installGitHooks` 안 했음 | 새 클론 시 한 번 실행 |
+| "No error log appeared, so it is fixed" | The response may still not be `200 OK`; a catch-all handler can hide failures. | Verify both the status code and body directly. |
+| Switching between options A and B | Editing before validating hypotheses hides what actually fixed the issue. | Validate one hypothesis at a time and apply changes after decisive evidence. |
+| Expecting `ddl-auto: update` to apply every schema change | Hibernate can add columns but does not reliably apply index or FK changes. | Run `DROP DATABASE memoreel; CREATE DATABASE memoreel;` and restart. |
+| Tests pass but dev is broken | Tests use H2 with `profiles.active=test`; dev uses MySQL, so dialect behavior can differ. | Verify both with tests and by running dev locally. |
+| Pre-commit/pre-push hooks do not run and CI fails after merge | `./gradlew installGitHooks` was not run. | Run it once after a fresh clone. |
 
-## 4. 이 레포 특이사항
+## 4. Repository-Specific Notes
 
-- 기본 프로필 `dev` (`application.yml`의 `profiles.active: dev`)
-- 인증: `X-Device-Id` 헤더 → `DeviceIdArgumentResolver` → `@DeviceId String deviceId`
-- 미등록 기기는 `ErrorCode.UNAUTHORIZED` (401)
-- `GlobalExceptionHandler`가 `BusinessException` → `ApiResponse.error()` 자동 변환
-- 응답은 snake_case + `non_null`
-- 빌드 검증: `./gradlew harness` (spotless + ArchUnit + test)
+- Default profile: `dev` (`profiles.active: dev` in `application.yml`)
+- Authentication: `X-Device-Id` header -> `DeviceIdArgumentResolver` -> `@DeviceId String deviceId`
+- Unregistered devices return `ErrorCode.UNAUTHORIZED` (401).
+- `GlobalExceptionHandler` converts `BusinessException` to `ApiResponse.error()` automatically.
+- Responses use snake_case and `non_null`.
+- Build verification: `./gradlew harness` (Spotless + ArchUnit + tests)
 
-## 5. 한 줄 요약
+## 5. One-Line Summary
 
-**띄우지 않고 고친 건 고친 게 아니다.**
+**If you did not run it, you did not fix it.**

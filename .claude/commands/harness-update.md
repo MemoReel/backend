@@ -1,77 +1,77 @@
-하네스 엔지니어링 인프라를 관리하고 업데이트하는 스킬입니다.
+This skill manages and updates the harness engineering infrastructure.
 
-## 관리 대상 파일
+## Managed Files
 
-| 파일 | 역할 |
+| File | Role |
 |---|---|
-| `CLAUDE.md` | AI 에이전트 가이드 |
-| `docs/specs/CONVENTIONS.md` | 코딩/도메인 컨벤션 |
-| `docs/specs/MAP.md` | (선택) 아키텍처 맵 — 아직 없으면 새로 추가 가능 |
-| `docs/specs/ADR/*.md` | (선택) 아키텍처 결정 기록 |
-| `src/test/java/com/memoreel/backend/architecture/*.java` | ArchUnit 아키텍처 테스트 |
-| `build.gradle` (Spotless/ArchUnit 의존성·태스크) | 포맷터·아키텍처·하네스 태스크 정의 |
+| `CLAUDE.md` | AI agent guide |
+| `docs/specs/CONVENTIONS.md` | Coding and domain conventions |
+| `docs/specs/MAP.md` | Optional architecture map; add it if it does not exist yet |
+| `docs/specs/ADR/*.md` | Optional architecture decision records |
+| `src/test/java/com/memoreel/backend/architecture/*.java` | ArchUnit architecture tests |
+| `build.gradle` (Spotless/ArchUnit dependencies and tasks) | Formatter, architecture, and harness task definitions |
 | `.githooks/pre-commit`, `.githooks/pre-push` | Git hooks |
-| `.github/workflows/validate.yml` | CI 워크플로 |
-| `CONTRIBUTING.md` | 외부 기여자용 가이드 |
+| `.github/workflows/validate.yml` | CI workflow |
+| `CONTRIBUTING.md` | Guide for external contributors |
 
-## 절차
+## Procedure
 
-### 1단계: 현재 상태 파악
+### Step 1: Understand the Current State
 
-1. 사용자 요청(`$ARGUMENTS`)을 분석하여 어떤 하네스 구성요소를 수정해야 하는지 판단
-2. 해당 구성요소의 현재 상태를 읽기
+1. Analyze the user request (`$ARGUMENTS`) and decide which harness components need to change.
+2. Read the current state of those components.
 
-### 2단계: 수정 실행
+### Step 2: Apply Changes
 
-요청 유형에 따라 분기:
+Branch by request type:
 
-#### ADR 추가
-1. `docs/specs/ADR/` 디렉토리에서 마지막 번호 확인 (없으면 `001`부터 시작)
-2. 다음 번호로 새 ADR 파일 생성 (한국어)
-3. 형식: `{번호}-{주제}.md` (예: `003-jwt-auth.md`)
-4. 관련된 다른 하네스 파일 업데이트 (CLAUDE.md, MAP.md 등)
+#### Add an ADR
+1. Check the highest existing number in `docs/specs/ADR/`; start from `001` if none exist.
+2. Create a new ADR file with the next number.
+3. Format: `{number}-{topic}.md` (for example, `003-jwt-auth.md`).
+4. Update related harness files such as `CLAUDE.md` and `MAP.md`.
 
-#### Spotless 규칙 추가/수정 (Java)
-1. `build.gradle`의 `spotless { java { ... } }` 블록 수정
-2. 필요 시 `googleJavaFormat` 버전 갱신, `removeUnusedImports`/`trimTrailingWhitespace` 등 옵션 추가
-3. `docs/specs/CONVENTIONS.md`에 관련 컨벤션 반영
-4. `./gradlew spotlessApply`로 기존 코드 일괄 정렬
+#### Add or Modify Spotless Rules (Java)
+1. Modify the `spotless { java { ... } }` block in `build.gradle`.
+2. If needed, update the `googleJavaFormat` version and options such as `removeUnusedImports` or `trimTrailingWhitespace`.
+3. Reflect the convention in `docs/specs/CONVENTIONS.md`.
+4. Run `./gradlew spotlessApply` to format existing code.
 
-#### ArchUnit 규칙 추가
-1. `src/test/java/com/memoreel/backend/architecture/ArchitectureRules.java`에 새 규칙 메서드 추가
-2. 그 규칙을 호출하는 `@Test`를 `LayerDependencyTest` 또는 `NamingConventionTest`에 추가
-3. 필요 시 새 테스트 클래스 생성
-4. `docs/specs/MAP.md`(존재 시)에 의존성 규칙 반영
+#### Add an ArchUnit Rule
+1. Add a new rule method to `src/test/java/com/memoreel/backend/architecture/ArchitectureRules.java`.
+2. Add a `@Test` that calls the rule in `LayerDependencyTest` or `NamingConventionTest`.
+3. Create a new test class if needed.
+4. Reflect dependency rules in `docs/specs/MAP.md` if that file exists.
 
-#### 컨벤션 수정
-1. `docs/specs/CONVENTIONS.md` 수정
-2. `CLAUDE.md`에 요약 반영
-3. 필요 시 Spotless 옵션이나 ArchUnit 테스트도 함께 업데이트
+#### Modify Conventions
+1. Update `docs/specs/CONVENTIONS.md`.
+2. Reflect the summary in `CLAUDE.md`.
+3. If needed, update Spotless options or ArchUnit tests as well.
 
-#### Git Hook / CI 수정
-1. `.githooks/*` 또는 `.github/workflows/validate.yml` 수정
-2. `CONTRIBUTING.md`의 로컬 세팅 안내 동기화
-3. CI 트리거(브랜치/이벤트) 변경 시 명시적으로 PR에 메모
+#### Modify Git Hooks / CI
+1. Update `.githooks/*` or `.github/workflows/validate.yml`.
+2. Synchronize local setup instructions in `CONTRIBUTING.md`.
+3. When changing CI triggers such as branches or events, call that out explicitly in the PR notes.
 
-### 3단계: 문서 동기화
+### Step 3: Synchronize Documentation
 
-수정 사항이 여러 파일에 영향을 미치는 경우, 관련 문서를 모두 동기화:
-- `CLAUDE.md` ↔ `docs/specs/CONVENTIONS.md` 일관성
-- `docs/specs/MAP.md`(존재 시) ↔ ArchUnit 테스트 일관성
-- `CONTRIBUTING.md`의 명령/안내가 `build.gradle` 태스크와 일치
+When a change affects multiple files, keep related documents synchronized:
+- `CLAUDE.md` <-> `docs/specs/CONVENTIONS.md`
+- `docs/specs/MAP.md` if present <-> ArchUnit tests
+- Commands and instructions in `CONTRIBUTING.md` <-> `build.gradle` tasks
 
-### 4단계: 검증
+### Step 4: Verify
 
 ```bash
 ./gradlew harness
 ```
 
-통과 못 하면 수정 단계로 돌아간다. 통과 후 변경 내용을 사용자에게 요약 보고.
+If it fails, return to the change step. After it passes, summarize the changes for the user.
 
-## 사용 예시
+## Examples
 
-- `/harness-update 새로운 ADR 추가: JWT 인증 도입 결정`
-- `/harness-update Spotless 줄 길이 옵션 조정`
-- `/harness-update ArchUnit에 common 패키지는 도메인 패키지를 의존하면 안 되는 규칙 추가`
-- `/harness-update 커밋 메시지 컨벤션에 breaking change 표기법 추가`
-- `/harness-update CI에 jar 빌드 단계 추가`
+- `/harness-update Add a new ADR: decide to introduce JWT authentication`
+- `/harness-update Adjust the Spotless line-length option`
+- `/harness-update Add an ArchUnit rule that common packages must not depend on domain packages`
+- `/harness-update Add breaking-change notation to the commit message convention`
+- `/harness-update Add a jar build step to CI`

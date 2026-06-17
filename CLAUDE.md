@@ -1,92 +1,92 @@
-# MemoReel Backend — Project Guide
+# MemoReel Backend - Project Guide
 
-## 아키텍처 (도메인 + 레이어)
+## Architecture (Domain + Layer)
 
-도메인별 패키지 안에 레이어 디렉터리를 둔다. JPA `@Entity`는 현재 `entity/` 패키지로 평탄화돼 있다(과도기적 — 도메인 분리 시 `{도메인}/entity/`로 이동 가능).
+Each domain package contains its own layer files. JPA `@Entity` classes are currently flattened under the shared `entity/` package. This is transitional; they can be moved to `{domain}/entity/` as domain boundaries become clearer.
 
 ```
 com.memoreel.backend/
-  {도메인}/                  # 예: user, song, keyword
+  {domain}/                  # e.g. user, song, keyword
     *Controller.java         # @RestController
-    *Service.java            # @Service - 비즈니스 로직
+    *Service.java            # @Service - business logic
     *Repository.java         # Spring Data JPA Repository
-    dto/                     # 요청/응답 DTO
-  entity/                    # JPA 엔티티 (공통 평탄화)
-  common/                    # 공통 모듈
-    config/                  # JpaAuditingConfig 등
+    dto/                     # request/response DTOs
+  entity/                    # JPA entities (shared flattened package)
+  common/                    # shared modules
+    config/                  # e.g. JpaAuditingConfig
     error/                   # ErrorCode, BusinessException, GlobalExceptionHandler
     response/                # ApiResponse, PageResponse
     web/                     # @DeviceId, ArgumentResolver, WebConfig
     pagination/              # CursorCodec
 ```
 
-### 의존성 규칙 (ArchUnit으로 강제)
+### Dependency Rules (Enforced by ArchUnit)
 
-- `*Controller`는 `*Repository`를 **직접 호출하지 않는다** (Service 경유)
-- 패키지 간 **순환 의존성 금지**
-- 클래스 위치: `*Controller`는 `..controller..` 또는 도메인 루트 패키지, `*Service`/`*Repository`도 동일 원칙
+- `*Controller` classes must not call `*Repository` classes directly; route access through services.
+- Circular dependencies between packages are forbidden.
+- Class placement: `*Controller` classes may live in `..controller..` or the domain root package. The same principle applies to `*Service` and `*Repository`.
 
-규칙 정의: `src/test/java/com/memoreel/backend/architecture/ArchitectureRules.java`
+Rule definitions: `src/test/java/com/memoreel/backend/architecture/ArchitectureRules.java`
 
-## 인증 / 헤더
+## Authentication / Headers
 
-- 현재 인증 방식: **`X-Device-Id` 헤더**
-- Resolver: `common/web/DeviceIdArgumentResolver.java`, 어노테이션: `@DeviceId String deviceId`
-- 미등록 기기는 `401 UNAUTHORIZED` (`ErrorCode.UNAUTHORIZED`)
+- Current authentication method: **`X-Device-Id` header**
+- Resolver: `common/web/DeviceIdArgumentResolver.java`, annotation: `@DeviceId String deviceId`
+- Unregistered devices return `401 UNAUTHORIZED` (`ErrorCode.UNAUTHORIZED`).
 
-## API 응답 컨벤션
+## API Response Convention
 
-- 성공: `ApiResponse.success(data)` → `{ "ok": true, "data": ... }`
-- 실패: `GlobalExceptionHandler`가 자동 변환 → `{ "ok": false, "error": { code, message, details } }`
+- Success: `ApiResponse.success(data)` -> `{ "ok": true, "data": ... }`
+- Failure: `GlobalExceptionHandler` converts exceptions automatically -> `{ "ok": false, "error": { code, message, details } }`
 - Jackson: `SNAKE_CASE` + `default-property-inclusion: non_null` (`src/main/resources/application.yml`)
-- 컨트롤러는 `ApiResponse<T>`를 반환하되, 메타 헤더(예: 201 Created)는 `@ResponseStatus`로 명시
+- Controllers return `ApiResponse<T>`. Metadata headers or status codes, such as `201 Created`, should be declared with `@ResponseStatus`.
 
-## 코딩 컨벤션
+## Coding Convention
 
-- **포맷터**: Spotless + google-java-format (2-space 인덴트, import 정리)
-- 네이밍: `*Controller`, `*Service`, `*Repository` 접미사 (ArchUnit 강제)
-- DTO: Java `record` 선호 (불변)
-- Controller에 Entity 직접 노출 금지. DTO 변환은 Service 또는 DTO 정적 팩토리에서
-- Swagger `@Operation` / `@Schema(description = ...)` 등 API 설명은 **한국어**
-- 상세 컨벤션: `docs/specs/CONVENTIONS.md`
+- **Formatter**: Spotless + google-java-format (2-space indentation, import cleanup)
+- Naming: `*Controller`, `*Service`, and `*Repository` suffixes are enforced by ArchUnit.
+- DTOs: prefer Java `record` types for immutability.
+- Do not expose entities directly from controllers. DTO conversion belongs in services or DTO static factories.
+- Swagger API descriptions such as `@Operation` and `@Schema(description = ...)` should be written in Korean.
+- Detailed conventions: `docs/specs/CONVENTIONS.md`
 
-## 브랜치 컨벤션
+## Branch Convention
 
 ```
-junhyeon/{type}/#{이슈번호}/{간단한-설명}
+junhyeon/{type}/#{issue-number}/{short-description}
 ```
 
-- 예: `junhyeon/chore/15/erd-apply`, `junhyeon/feat/12/memo-crud`
+- Examples: `junhyeon/chore/15/erd-apply`, `junhyeon/feat/12/memo-crud`
 - type: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `style`
 
-## 커밋 메시지 컨벤션
+## Commit Message Convention
 
-Conventional Commits (`<type>: <한국어 제목>`).
+Conventional Commits (`<type>: <Korean subject>`).
 
-- 본문은 "무엇을·왜" 중심으로 1~3줄
-- 푸터: `Closes #N` / `Refs #N`
-- 예: `refactor: ERD 적용 — Photo 엔티티 제거 및 records 스키마 정리`
+- Body: 1-3 lines focused on what changed and why.
+- Footer: `Closes #N` / `Refs #N`
+- Example: `refactor: apply ERD - remove Photo entity and clean up records schema`
 
-## 빌드 및 검증
+## Build and Verification
 
 ```bash
-./gradlew installGitHooks   # 로컬 git hook 설치 (초기 1회)
-./gradlew spotlessApply     # 포맷팅 자동 수정
-./gradlew spotlessCheck     # 포맷팅 검증
-./gradlew test              # 테스트 (ArchUnit 포함)
-./gradlew harness           # 전체 검증 (spotless + ArchUnit + test)
-./gradlew bootRun           # 로컬 실행 (dev profile)
+./gradlew installGitHooks   # install local git hooks (first run only)
+./gradlew spotlessApply     # auto-format code
+./gradlew spotlessCheck     # verify formatting
+./gradlew test              # run tests, including ArchUnit
+./gradlew harness           # full verification: spotless + ArchUnit + tests
+./gradlew bootRun           # run locally with the dev profile
 ```
 
-**모든 커밋·푸시 전에 `./gradlew harness`를 실행해 통과 확인.**
+**Run `./gradlew harness` before every commit and push, and confirm it passes.**
 - pre-commit: `spotlessCheck`
 - pre-push: `harness`
-- CI(`.github/workflows/validate.yml`): PR/main push 시 `harness` 실행
+- CI (`.github/workflows/validate.yml`): runs `harness` on PRs and pushes to `main`
 
-## 슬래시 커맨드 (`.claude/commands/`)
+## Slash Commands (`.claude/commands/`)
 
-- `/harness-update {작업}` — 하네스 인프라(Spotless, ArchUnit, 훅, CI) 관리/업데이트
+- `/harness-update {task}` - manage or update harness infrastructure such as Spotless, ArchUnit, hooks, and CI.
 
-## 스킬 (`.claude/skills/`)
+## Skills (`.claude/skills/`)
 
-- `debug-and-verify-locally` — "안 돼", "에러 떠" 등 버그 보고 시 자동 트리거. `bootRun` + curl로 직접 검증
+- `debug-and-verify-locally` - triggered automatically for bug reports such as "it does not work" or "there is an error"; verifies behavior directly with `bootRun` and curl.
