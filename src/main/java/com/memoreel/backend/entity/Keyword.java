@@ -17,15 +17,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Keyword extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, length = 40, unique = true)
-    private String name;
+  @Column(nullable = false, length = 40, unique = true)
+  private String name;
 
-    @Builder
-    public Keyword(String name) {
-        this.name = name;
-    }
+  @Builder
+  public Keyword(String name) {
+    this.name = name;
+  }
 }

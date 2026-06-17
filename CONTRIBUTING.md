@@ -2,6 +2,19 @@
 
 모든 작업은 **이슈 생성 → 브랜치 → 커밋 → PR** 순서로 진행합니다.
 
+## 로컬 환경 세팅 (최초 1회)
+
+Git hook(커밋/푸시 시 자동 검증)을 설치합니다.
+
+```bash
+./gradlew installGitHooks
+```
+
+- `pre-commit`: `spotlessCheck` (코드 포맷)
+- `pre-push`: `harness` (spotless + ArchUnit + test 전체)
+
+포맷 오류는 `./gradlew spotlessApply`로 일괄 정렬할 수 있습니다.
+
 ## 커밋 컨벤션
 
 [Conventional Commits](https://www.conventionalcommits.org/) 형식을 따릅니다.
