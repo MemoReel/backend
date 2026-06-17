@@ -17,26 +17,24 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(name = "device_id", nullable = false, length = 128, unique = true)
-    private String deviceId;
+  @Column(name = "device_id", nullable = false, length = 128, unique = true)
+  private String deviceId;
 
-    @Column(nullable = false, length = 40)
-    private String nickname;
+  @Column(nullable = false, length = 40)
+  private String nickname;
 
-    @Builder
-    public User(String deviceId, String nickname) {
-        this.deviceId = deviceId;
-        this.nickname = nickname;
-    }
+  @Builder
+  public User(String deviceId, String nickname) {
+    this.deviceId = deviceId;
+    this.nickname = nickname;
+  }
 
-    /**
-     * 닉네임 없이 가입한 경우, 저장 후 생성된 id 기반 기본 닉네임을 부여한다.
-     */
-    public void assignDefaultNickname(String nickname) {
-        this.nickname = nickname;
-    }
+  /** 닉네임 없이 가입한 경우, 저장 후 생성된 id 기반 기본 닉네임을 부여한다. */
+  public void assignDefaultNickname(String nickname) {
+    this.nickname = nickname;
+  }
 }

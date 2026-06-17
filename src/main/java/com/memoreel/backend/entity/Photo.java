@@ -19,40 +19,46 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Photo extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, length = 512)
-    private String url;
+  @Column(nullable = false, length = 512)
+  private String url;
 
-    @Column(nullable = false)
-    private Integer width;
+  @Column(nullable = false)
+  private Integer width;
 
-    @Column(nullable = false)
-    private Integer height;
+  @Column(nullable = false)
+  private Integer height;
 
-    @Column(name = "taken_at")
-    private LocalDateTime takenAt;
+  @Column(name = "taken_at")
+  private LocalDateTime takenAt;
 
-    @Column(name = "exif_lat", precision = 10, scale = 7)
-    private BigDecimal lat;
+  @Column(name = "exif_lat", precision = 10, scale = 7)
+  private BigDecimal lat;
 
-    @Column(name = "exif_lng", precision = 10, scale = 7)
-    private BigDecimal lng;
+  @Column(name = "exif_lng", precision = 10, scale = 7)
+  private BigDecimal lng;
 
-    @Column(name = "expires_at", nullable = false)
-    private LocalDateTime expiresAt;
+  @Column(name = "expires_at", nullable = false)
+  private LocalDateTime expiresAt;
 
-    @Builder
-    public Photo(String url, Integer width, Integer height, LocalDateTime takenAt,
-                 BigDecimal lat, BigDecimal lng, LocalDateTime expiresAt) {
-        this.url = url;
-        this.width = width;
-        this.height = height;
-        this.takenAt = takenAt;
-        this.lat = lat;
-        this.lng = lng;
-        this.expiresAt = expiresAt;
-    }
+  @Builder
+  public Photo(
+      String url,
+      Integer width,
+      Integer height,
+      LocalDateTime takenAt,
+      BigDecimal lat,
+      BigDecimal lng,
+      LocalDateTime expiresAt) {
+    this.url = url;
+    this.width = width;
+    this.height = height;
+    this.takenAt = takenAt;
+    this.lat = lat;
+    this.lng = lng;
+    this.expiresAt = expiresAt;
+  }
 }
