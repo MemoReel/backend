@@ -37,33 +37,33 @@ final class ArchitectureRules {
     return slices().matching(BASE_PACKAGE + ".(*)..").should().beFreeOfCycles();
   }
 
-  /** *Controller는 controller 패키지(혹은 단일 도메인 루트 패키지)에 있어야 한다. */
+  /** *Controller는 controller 패키지 또는 도메인 루트 패키지에 있어야 한다. */
   static ArchRule controllerNaming() {
     return classes()
         .that()
         .haveSimpleNameEndingWith("Controller")
         .should()
-        .resideInAnyPackage("..controller..", "..user..")
+        .resideInAnyPackage("..controller..", BASE_PACKAGE + ".*")
         .allowEmptyShould(true);
   }
 
-  /** *Service는 service 패키지(혹은 단일 도메인 루트 패키지)에 있어야 한다. */
+  /** *Service는 service 패키지 또는 도메인 루트 패키지에 있어야 한다. */
   static ArchRule serviceNaming() {
     return classes()
         .that()
         .haveSimpleNameEndingWith("Service")
         .should()
-        .resideInAnyPackage("..service..", "..user..")
+        .resideInAnyPackage("..service..", BASE_PACKAGE + ".*")
         .allowEmptyShould(true);
   }
 
-  /** *Repository는 repository 패키지(혹은 단일 도메인 루트 패키지)에 있어야 한다. */
+  /** *Repository는 repository 패키지 또는 도메인 루트 패키지에 있어야 한다. */
   static ArchRule repositoryNaming() {
     return classes()
         .that()
         .haveSimpleNameEndingWith("Repository")
         .should()
-        .resideInAnyPackage("..repository..", "..user..")
+        .resideInAnyPackage("..repository..", BASE_PACKAGE + ".*")
         .allowEmptyShould(true);
   }
 }
