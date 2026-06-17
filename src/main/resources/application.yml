@@ -8,3 +8,8 @@ spring:
   jackson:
     property-naming-strategy: SNAKE_CASE
     default-property-inclusion: non_null
+
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 20MB

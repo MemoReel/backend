@@ -5,9 +5,13 @@ import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -25,6 +29,26 @@ public class GlobalExceptionHandler {
     }
     return build(
         ErrorCode.VALIDATION_ERROR, ErrorCode.VALIDATION_ERROR.getDefaultMessage(), fieldErrors);
+  }
+
+  @ExceptionHandler({
+    MissingServletRequestPartException.class,
+    MissingServletRequestParameterException.class
+  })
+  public ResponseEntity<ApiResponse<Void>> handleMissingRequestPart(Exception e) {
+    return build(ErrorCode.VALIDATION_ERROR, e.getMessage(), null);
+  }
+
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  public ResponseEntity<ApiResponse<Void>> handleUploadTooLarge(MaxUploadSizeExceededException e) {
+    return build(
+        ErrorCode.PAYLOAD_TOO_LARGE, ErrorCode.PAYLOAD_TOO_LARGE.getDefaultMessage(), null);
+  }
+
+  @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+  public ResponseEntity<ApiResponse<Void>> handleMediaType(HttpMediaTypeNotSupportedException e) {
+    return build(
+        ErrorCode.UNSUPPORTED_MEDIA, ErrorCode.UNSUPPORTED_MEDIA.getDefaultMessage(), null);
   }
 
   @ExceptionHandler(Exception.class)
