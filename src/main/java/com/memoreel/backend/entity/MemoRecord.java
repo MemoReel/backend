@@ -6,6 +6,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -16,7 +17,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "records")
+@Table(
+    name = "records",
+    indexes = @Index(name = "idx_records_user_created", columnList = "user_id, created_at DESC"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MemoRecord extends BaseTimeEntity {
@@ -30,12 +33,11 @@ public class MemoRecord extends BaseTimeEntity {
   private User user;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "song_id", nullable = false)
+  @JoinColumn(name = "song_id", nullable = false, unique = true)
   private Song song;
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "photo_id", nullable = false)
-  private Photo photo;
+  @Column(name = "photo_url", nullable = false, length = 512)
+  private String photoUrl;
 
   @Column(name = "location_lat", precision = 10, scale = 7)
   private BigDecimal locationLat;
@@ -50,13 +52,13 @@ public class MemoRecord extends BaseTimeEntity {
   public MemoRecord(
       User user,
       Song song,
-      Photo photo,
+      String photoUrl,
       BigDecimal locationLat,
       BigDecimal locationLng,
       String locationLabel) {
     this.user = user;
     this.song = song;
-    this.photo = photo;
+    this.photoUrl = photoUrl;
     this.locationLat = locationLat;
     this.locationLng = locationLng;
     this.locationLabel = locationLabel;
