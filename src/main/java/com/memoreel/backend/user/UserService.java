@@ -2,7 +2,9 @@ package com.memoreel.backend.user;
 
 import com.memoreel.backend.common.error.BusinessException;
 import com.memoreel.backend.common.error.ErrorCode;
+import com.memoreel.backend.entity.Gender;
 import com.memoreel.backend.entity.User;
+import java.time.LocalDate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,20 +22,26 @@ public class UserService {
    * 닉네임("사용자{id}")을 부여한다.
    */
   @Transactional
-  public RegisterResult register(String deviceId, String nickname) {
+  public RegisterResult register(
+      String deviceId, String nickname, LocalDate birthDate, Gender gender) {
     return userRepository
         .findByDeviceId(deviceId)
         .map(user -> new RegisterResult(user, false))
-        .orElseGet(() -> new RegisterResult(create(deviceId, nickname), true));
+        .orElseGet(() -> new RegisterResult(create(deviceId, nickname, birthDate, gender), true));
   }
 
-  private User create(String deviceId, String nickname) {
+  private User create(String deviceId, String nickname, LocalDate birthDate, Gender gender) {
     String trimmed = (nickname == null) ? null : nickname.trim();
     boolean useDefault = (trimmed == null || trimmed.isEmpty());
 
     User user =
         userRepository.save(
-            User.builder().deviceId(deviceId).nickname(useDefault ? "" : trimmed).build());
+            User.builder()
+                .deviceId(deviceId)
+                .nickname(useDefault ? "" : trimmed)
+                .birthDate(birthDate)
+                .gender(gender)
+                .build());
 
     if (useDefault) {
       user.assignDefaultNickname("사용자" + user.getId());

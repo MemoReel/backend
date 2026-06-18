@@ -13,7 +13,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.memoreel.backend.common.error.BusinessException;
 import com.memoreel.backend.common.error.ErrorCode;
 import com.memoreel.backend.common.web.DeviceIdArgumentResolver;
+import com.memoreel.backend.entity.Gender;
 import com.memoreel.backend.entity.User;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,8 @@ class UserControllerTest {
     User user = mock(User.class);
     when(user.getId()).thenReturn(1024L);
     when(user.getNickname()).thenReturn("지은");
+    when(user.getBirthDate()).thenReturn(LocalDate.parse("2000-01-01"));
+    when(user.getGender()).thenReturn(Gender.FEMALE);
     when(user.getCreatedAt()).thenReturn(LocalDateTime.parse("2026-06-11T14:23:00"));
     return user;
   }
@@ -40,14 +44,16 @@ class UserControllerTest {
   @Test
   void POST_users_신규_기기는_201로_등록된_user를_반환한다() throws Exception {
     User user = stubUser();
-    when(userService.register("device-1", "지은")).thenReturn(new RegisterResult(user, true));
+    when(userService.register("device-1", "지은", LocalDate.parse("2000-01-01"), Gender.FEMALE))
+        .thenReturn(new RegisterResult(user, true));
 
     mockMvc
         .perform(
             post("/users")
                 .header(DeviceIdArgumentResolver.HEADER_NAME, "device-1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nickname\":\"지은\"}"))
+                .content(
+                    "{\"nickname\":\"지은\",\"birth_date\":\"2000-01-01\",\"gender\":\"FEMALE\"}"))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.ok").value(true))
         .andExpect(jsonPath("$.data.user.id").value(1024))
@@ -58,14 +64,16 @@ class UserControllerTest {
   @Test
   void POST_users_이미_등록된_기기는_200으로_기존_user를_반환한다() throws Exception {
     User user = stubUser();
-    when(userService.register("device-1", "지은")).thenReturn(new RegisterResult(user, false));
+    when(userService.register("device-1", "지은", LocalDate.parse("2000-01-01"), Gender.FEMALE))
+        .thenReturn(new RegisterResult(user, false));
 
     mockMvc
         .perform(
             post("/users")
                 .header(DeviceIdArgumentResolver.HEADER_NAME, "device-1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nickname\":\"지은\"}"))
+                .content(
+                    "{\"nickname\":\"지은\",\"birth_date\":\"2000-01-01\",\"gender\":\"FEMALE\"}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.ok").value(true))
         .andExpect(jsonPath("$.data.user.id").value(1024));
@@ -74,14 +82,15 @@ class UserControllerTest {
   @Test
   void POST_users_닉네임을_생략해도_201로_가입된다() throws Exception {
     User user = stubUser();
-    when(userService.register("device-1", null)).thenReturn(new RegisterResult(user, true));
+    when(userService.register("device-1", null, LocalDate.parse("2000-01-01"), Gender.FEMALE))
+        .thenReturn(new RegisterResult(user, true));
 
     mockMvc
         .perform(
             post("/users")
                 .header(DeviceIdArgumentResolver.HEADER_NAME, "device-1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{}"))
+                .content("{\"birth_date\":\"2000-01-01\",\"gender\":\"FEMALE\"}"))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.ok").value(true))
         .andExpect(jsonPath("$.data.user.id").value(1024));
@@ -94,12 +103,43 @@ class UserControllerTest {
             post("/users")
                 .header(DeviceIdArgumentResolver.HEADER_NAME, "device-1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nickname\":\"a\"}"))
+                .content(
+                    "{\"nickname\":\"a\",\"birth_date\":\"2000-01-01\",\"gender\":\"FEMALE\"}"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.ok").value(false))
         .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
 
-    verify(userService, never()).register(any(), any());
+    verify(userService, never()).register(any(), any(), any(), any());
+  }
+
+  @Test
+  void POST_users_생년월일이_없으면_400_VALIDATION_ERROR다() throws Exception {
+    mockMvc
+        .perform(
+            post("/users")
+                .header(DeviceIdArgumentResolver.HEADER_NAME, "device-1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nickname\":\"지은\",\"gender\":\"FEMALE\"}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.ok").value(false))
+        .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+
+    verify(userService, never()).register(any(), any(), any(), any());
+  }
+
+  @Test
+  void POST_users_성별이_없으면_400_VALIDATION_ERROR다() throws Exception {
+    mockMvc
+        .perform(
+            post("/users")
+                .header(DeviceIdArgumentResolver.HEADER_NAME, "device-1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nickname\":\"지은\",\"birth_date\":\"2000-01-01\"}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.ok").value(false))
+        .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+
+    verify(userService, never()).register(any(), any(), any(), any());
   }
 
   @Test
