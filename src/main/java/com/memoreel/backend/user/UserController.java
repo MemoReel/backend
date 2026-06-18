@@ -25,7 +25,8 @@ public class UserController {
   @PostMapping("/users")
   public ResponseEntity<ApiResponse<UserData>> register(
       @DeviceId String deviceId, @Valid @RequestBody UserRegisterRequest request) {
-    RegisterResult result = userService.register(deviceId, request.nickname());
+    RegisterResult result =
+        userService.register(deviceId, request.nickname(), request.birthDate(), request.gender());
     HttpStatus status = result.created() ? HttpStatus.CREATED : HttpStatus.OK;
     return ResponseEntity.status(status).body(ApiResponse.success(UserData.from(result.user())));
   }
