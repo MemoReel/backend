@@ -14,15 +14,17 @@ public record RecordListResponse(List<Item> items) {
       Long recordId,
       LocalDateTime createdAt,
       String photoUrl,
+      String photoViewUrl,
       Track track,
       List<KeywordRef> keywords,
       boolean hasLocation) {
 
-    public static Item of(MemoRecord record, List<Keyword> keywords) {
+    public static Item of(MemoRecord record, List<Keyword> keywords, String photoViewUrl) {
       return new Item(
           record.getId(),
           record.getCreatedAt(),
           record.getPhotoUrl(),
+          photoViewUrl,
           Track.from(record.getSong()),
           keywords.stream().map(KeywordRef::from).toList(),
           record.getLocationLat() != null || record.getLocationLng() != null);
