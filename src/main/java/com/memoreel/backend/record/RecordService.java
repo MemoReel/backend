@@ -10,11 +10,14 @@ import com.memoreel.backend.entity.User;
 import com.memoreel.backend.keyword.KeywordRepository;
 import com.memoreel.backend.keyword.RecordKeywordRepository;
 import com.memoreel.backend.record.dto.RecordCreateRequest;
+import com.memoreel.backend.record.dto.RecordListResponse;
 import com.memoreel.backend.record.dto.RecordResponse;
 import com.memoreel.backend.song.SongRepository;
 import com.memoreel.backend.user.UserRepository;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,11 +45,35 @@ public class RecordService {
     this.recordKeywordRepository = recordKeywordRepository;
   }
 
+  @Transactional(readOnly = true)
+  public RecordListResponse list(String deviceId) {
+    User user = requireUser(deviceId);
+    List<MemoRecord> records = memoRecordRepository.findAllByUserWithSongOrderByCreatedAtDesc(user);
+    if (records.isEmpty()) {
+      return new RecordListResponse(List.of());
+    }
+    Map<Long, List<Keyword>> keywordsByRecordId = loadKeywordsBatch(records);
+    List<RecordListResponse.Item> items =
+        records.stream()
+            .map(
+                r ->
+                    RecordListResponse.Item.of(
+                        r, keywordsByRecordId.getOrDefault(r.getId(), List.of())))
+            .toList();
+    return new RecordListResponse(items);
+  }
+
+  private Map<Long, List<Keyword>> loadKeywordsBatch(List<MemoRecord> records) {
+    List<Long> ids = records.stream().map(MemoRecord::getId).toList();
+    return recordKeywordRepository.findAllByRecordIdsWithKeyword(ids).stream()
+        .collect(
+            Collectors.groupingBy(
+                rk -> rk.getRecord().getId(),
+                Collectors.mapping(RecordKeyword::getKeyword, Collectors.toList())));
+  }
+
   public RecordResponse create(String deviceId, RecordCreateRequest request) {
-    User user =
-        userRepository
-            .findByDeviceId(deviceId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+    User user = requireUser(deviceId);
 
     List<Keyword> keywords = loadKeywords(request.keywordIds());
     Song song = upsertSong(request.track());
@@ -57,6 +84,12 @@ public class RecordService {
                 RecordKeyword.builder().record(record).keyword(keyword).build()));
 
     return RecordResponse.of(record, keywords);
+  }
+
+  private User requireUser(String deviceId) {
+    return userRepository
+        .findByDeviceId(deviceId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
   }
 
   private List<Keyword> loadKeywords(List<Long> keywordIds) {
