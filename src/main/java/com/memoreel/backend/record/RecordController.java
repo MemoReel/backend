@@ -8,6 +8,7 @@ import com.memoreel.backend.record.dto.RecordResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -34,5 +35,12 @@ public class RecordController {
   @GetMapping("/records")
   public ApiResponse<RecordListResponse> list(@DeviceId String deviceId) {
     return ApiResponse.success(recordService.list(deviceId));
+  }
+
+  /** 본인 record 단건 상세 조회 (명세 §4-3). 타인 record는 존재 노출 방지 위해 404로 응답한다. */
+  @GetMapping("/records/{recordId}")
+  public ApiResponse<RecordResponse> detail(
+      @DeviceId String deviceId, @PathVariable Long recordId) {
+    return ApiResponse.success(recordService.detail(deviceId, recordId));
   }
 }

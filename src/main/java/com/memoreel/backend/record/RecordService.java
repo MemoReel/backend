@@ -46,6 +46,18 @@ public class RecordService {
   }
 
   @Transactional(readOnly = true)
+  public RecordResponse detail(String deviceId, Long recordId) {
+    User user = requireUser(deviceId);
+    MemoRecord record =
+        memoRecordRepository
+            .findByIdAndUserWithSong(recordId, user)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    List<Keyword> keywords =
+        loadKeywordsBatch(List.of(record)).getOrDefault(record.getId(), List.of());
+    return RecordResponse.of(record, keywords);
+  }
+
+  @Transactional(readOnly = true)
   public RecordListResponse list(String deviceId) {
     User user = requireUser(deviceId);
     List<MemoRecord> records = memoRecordRepository.findAllByUserWithSongOrderByCreatedAtDesc(user);
