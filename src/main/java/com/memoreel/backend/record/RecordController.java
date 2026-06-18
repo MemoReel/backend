@@ -3,9 +3,11 @@ package com.memoreel.backend.record;
 import com.memoreel.backend.common.response.ApiResponse;
 import com.memoreel.backend.common.web.DeviceId;
 import com.memoreel.backend.record.dto.RecordCreateRequest;
+import com.memoreel.backend.record.dto.RecordListResponse;
 import com.memoreel.backend.record.dto.RecordResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -26,5 +28,11 @@ public class RecordController {
   public ApiResponse<RecordResponse> create(
       @DeviceId String deviceId, @Valid @RequestBody RecordCreateRequest request) {
     return ApiResponse.success(recordService.create(deviceId, request));
+  }
+
+  /** 본인이 저장한 record를 최신순으로 전체 반환한다 (명세 §4-2). MVP는 페이지네이션 없음. */
+  @GetMapping("/records")
+  public ApiResponse<RecordListResponse> list(@DeviceId String deviceId) {
+    return ApiResponse.success(recordService.list(deviceId));
   }
 }

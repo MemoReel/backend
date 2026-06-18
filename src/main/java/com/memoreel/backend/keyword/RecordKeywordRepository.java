@@ -47,4 +47,13 @@ public interface RecordKeywordRepository extends JpaRepository<RecordKeyword, Lo
   /** record id 목록으로 곡 정보까지 한 번에 로드한다(N+1 방지). */
   @Query("SELECT r FROM MemoRecord r JOIN FETCH r.song WHERE r.id IN :ids")
   List<MemoRecord> findRecordsWithSong(@Param("ids") List<Long> ids);
+
+  /** record id 목록에 매핑된 RecordKeyword를 keyword까지 fetch해 한 번에 로드한다(N+1 방지). */
+  @Query(
+      """
+        SELECT rk FROM RecordKeyword rk
+        JOIN FETCH rk.keyword
+        WHERE rk.record.id IN :recordIds
+        """)
+  List<RecordKeyword> findAllByRecordIdsWithKeyword(@Param("recordIds") List<Long> recordIds);
 }
