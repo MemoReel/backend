@@ -19,3 +19,9 @@ spring:
   jackson:
     property-naming-strategy: SNAKE_CASE
     default-property-inclusion: non_null
+
+memoreel:
+  storage:
+    s3:
+      bucket: memoreel-test
+      region: ap-northeast-2

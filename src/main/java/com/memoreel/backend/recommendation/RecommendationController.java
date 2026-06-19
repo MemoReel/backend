@@ -3,12 +3,14 @@ package com.memoreel.backend.recommendation;
 import com.memoreel.backend.common.response.ApiResponse;
 import com.memoreel.backend.common.web.DeviceId;
 import com.memoreel.backend.recommendation.dto.RecommendationResponse;
+import com.memoreel.backend.recommendation.dto.RecommendationRetryRequest;
+import com.memoreel.backend.recommendation.dto.RecommendationRetryResponse;
+import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,10 +33,14 @@ public class RecommendationController {
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
           LocalDateTime takenAt,
       @RequestParam(value = "lat", required = false) BigDecimal lat,
-      @RequestParam(value = "lng", required = false) BigDecimal lng,
-      @RequestParam(value = "exclude_track_ids", required = false) List<String> excludeTrackIds) {
-    Set<String> exclude = excludeTrackIds == null ? Set.of() : Set.copyOf(excludeTrackIds);
-    return ApiResponse.success(
-        recommendationService.recommend(deviceId, file, takenAt, lat, lng, exclude));
+      @RequestParam(value = "lng", required = false) BigDecimal lng) {
+    return ApiResponse.success(recommendationService.recommend(deviceId, file, takenAt, lat, lng));
+  }
+
+  /** 사진 재분석 없이 description/keywords를 재사용해 다른 5곡을 추천한다 (명세 §3 재추천). */
+  @PostMapping("/recommendations/retry")
+  public ApiResponse<RecommendationRetryResponse> retry(
+      @DeviceId String deviceId, @Valid @RequestBody RecommendationRetryRequest request) {
+    return ApiResponse.success(recommendationService.retry(deviceId, request));
   }
 }

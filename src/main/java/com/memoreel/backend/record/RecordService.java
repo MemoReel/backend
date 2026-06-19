@@ -9,6 +9,8 @@ import com.memoreel.backend.entity.Song;
 import com.memoreel.backend.entity.User;
 import com.memoreel.backend.keyword.KeywordRepository;
 import com.memoreel.backend.keyword.RecordKeywordRepository;
+import com.memoreel.backend.recommendation.port.StoragePort;
+import com.memoreel.backend.recommendation.port.StoredPhoto;
 import com.memoreel.backend.record.dto.RecordCreateRequest;
 import com.memoreel.backend.record.dto.RecordListResponse;
 import com.memoreel.backend.record.dto.RecordResponse;
@@ -21,7 +23,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 좋아요한 1곡과 사진을 기록으로 저장한다 (명세 §4-1). */
+/** 좋아요한 1곡과 사진을 기록으로 저장한다 (명세 §4-1). 사진은 temp 저장소에서 permanent 저장소로 이동시킨다. */
 @Service
 @Transactional
 public class RecordService {
@@ -31,18 +33,21 @@ public class RecordService {
   private final KeywordRepository keywordRepository;
   private final MemoRecordRepository memoRecordRepository;
   private final RecordKeywordRepository recordKeywordRepository;
+  private final StoragePort storagePort;
 
   public RecordService(
       UserRepository userRepository,
       SongRepository songRepository,
       KeywordRepository keywordRepository,
       MemoRecordRepository memoRecordRepository,
-      RecordKeywordRepository recordKeywordRepository) {
+      RecordKeywordRepository recordKeywordRepository,
+      StoragePort storagePort) {
     this.userRepository = userRepository;
     this.songRepository = songRepository;
     this.keywordRepository = keywordRepository;
     this.memoRecordRepository = memoRecordRepository;
     this.recordKeywordRepository = recordKeywordRepository;
+    this.storagePort = storagePort;
   }
 
   @Transactional(readOnly = true)
@@ -54,7 +59,7 @@ public class RecordService {
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     List<Keyword> keywords =
         loadKeywordsBatch(List.of(record)).getOrDefault(record.getId(), List.of());
-    return RecordResponse.of(record, keywords);
+    return RecordResponse.of(record, keywords, storagePort.viewUrl(record.getPhotoUrl()));
   }
 
   @Transactional(readOnly = true)
@@ -70,7 +75,9 @@ public class RecordService {
             .map(
                 r ->
                     RecordListResponse.Item.of(
-                        r, keywordsByRecordId.getOrDefault(r.getId(), List.of())))
+                        r,
+                        keywordsByRecordId.getOrDefault(r.getId(), List.of()),
+                        storagePort.viewUrl(r.getPhotoUrl())))
             .toList();
     return new RecordListResponse(items);
   }
@@ -89,13 +96,14 @@ public class RecordService {
 
     List<Keyword> keywords = loadKeywords(request.keywordIds());
     Song song = upsertSong(request.track());
-    MemoRecord record = saveRecord(user, song, request);
+    StoredPhoto photo = storagePort.promote(request.photoUrl());
+    MemoRecord record = saveRecord(user, song, request, photo.photoUrl());
     keywords.forEach(
         keyword ->
             recordKeywordRepository.save(
                 RecordKeyword.builder().record(record).keyword(keyword).build()));
 
-    return RecordResponse.of(record, keywords);
+    return RecordResponse.of(record, keywords, photo.viewUrl());
   }
 
   private User requireUser(String deviceId) {
@@ -136,7 +144,8 @@ public class RecordService {
                         .build()));
   }
 
-  private MemoRecord saveRecord(User user, Song song, RecordCreateRequest request) {
+  private MemoRecord saveRecord(
+      User user, Song song, RecordCreateRequest request, String permanentPhotoUrl) {
     RecordCreateRequest.Location location = request.location();
     BigDecimal lat = location == null ? null : location.lat();
     BigDecimal lng = location == null ? null : location.lng();
@@ -145,7 +154,7 @@ public class RecordService {
         MemoRecord.builder()
             .user(user)
             .song(song)
-            .photoUrl(request.photoUrl())
+            .photoUrl(permanentPhotoUrl)
             .locationLat(lat)
             .locationLng(lng)
             .locationLabel(label)

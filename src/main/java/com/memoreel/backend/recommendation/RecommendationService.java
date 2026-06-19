@@ -3,13 +3,19 @@ package com.memoreel.backend.recommendation;
 import com.memoreel.backend.common.error.BusinessException;
 import com.memoreel.backend.common.error.ErrorCode;
 import com.memoreel.backend.recommendation.dto.RecommendationResponse;
+import com.memoreel.backend.recommendation.dto.RecommendationRetryRequest;
+import com.memoreel.backend.recommendation.dto.RecommendationRetryResponse;
+import com.memoreel.backend.recommendation.dto.TrackResponse;
+import com.memoreel.backend.recommendation.port.LlmPort;
 import com.memoreel.backend.recommendation.port.Recommendation;
 import com.memoreel.backend.recommendation.port.RecommendationPort;
+import com.memoreel.backend.recommendation.port.SongCandidate;
 import com.memoreel.backend.recommendation.port.StoragePort;
+import com.memoreel.backend.recommendation.port.StoredPhoto;
 import com.memoreel.backend.user.UserRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,30 +26,48 @@ public class RecommendationService {
   private final UserRepository userRepository;
   private final StoragePort storagePort;
   private final RecommendationPort recommendationPort;
+  private final LlmPort llmPort;
+  private final SongResolver songResolver;
 
   public RecommendationService(
       UserRepository userRepository,
       StoragePort storagePort,
-      RecommendationPort recommendationPort) {
+      RecommendationPort recommendationPort,
+      LlmPort llmPort,
+      SongResolver songResolver) {
     this.userRepository = userRepository;
     this.recommendationPort = recommendationPort;
     this.storagePort = storagePort;
+    this.llmPort = llmPort;
+    this.songResolver = songResolver;
   }
 
   public RecommendationResponse recommend(
-      String deviceId,
-      MultipartFile file,
-      LocalDateTime takenAt,
-      BigDecimal lat,
-      BigDecimal lng,
-      Set<String> excludeTrackIds) {
+      String deviceId, MultipartFile file, LocalDateTime takenAt, BigDecimal lat, BigDecimal lng) {
     requireRegisteredDevice(deviceId);
     requireFile(file);
 
-    String photoUrl = storagePort.store(file);
+    StoredPhoto photo = storagePort.storeTemp(file);
     Recommendation recommendation =
-        recommendationPort.recommend(photoUrl, takenAt, lat, lng, excludeTrackIds);
-    return RecommendationResponse.of(photoUrl, recommendation);
+        recommendationPort.recommend(photo.photoUrl(), takenAt, lat, lng);
+    return RecommendationResponse.of(photo, recommendation);
+  }
+
+  /** 사진 재분석 없이 description/keywords를 재사용해 다른 5곡을 추천한다 (명세 §3 재추천). */
+  public RecommendationRetryResponse retry(String deviceId, RecommendationRetryRequest request) {
+    requireRegisteredDevice(deviceId);
+
+    List<SongCandidate> excludeTracks =
+        request.excludeTracks() == null
+            ? List.of()
+            : request.excludeTracks().stream()
+                .map(track -> new SongCandidate(track.title(), track.artist()))
+                .toList();
+    List<SongCandidate> candidates =
+        llmPort.recommendSongs(request.description(), request.keywordNames(), excludeTracks);
+    List<TrackResponse> tracks =
+        songResolver.resolve(candidates).stream().map(TrackResponse::from).toList();
+    return new RecommendationRetryResponse(tracks);
   }
 
   private void requireRegisteredDevice(String deviceId) {
