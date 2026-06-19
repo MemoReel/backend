@@ -2,8 +2,8 @@ package com.memoreel.backend.record.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -11,7 +11,7 @@ import java.util.List;
 public record RecordCreateRequest(
     @NotBlank String photoUrl,
     @Valid @NotNull Track track,
-    @NotEmpty List<Long> keywordIds,
+    @NotNull @Size(min = 1, max = 3) List<Long> keywordIds,
     @Valid Location location) {
 
   /** 클라이언트가 전달하는 곡 메타 (추천 응답을 그대로 되돌려준다). */
