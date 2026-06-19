@@ -31,11 +31,12 @@ public record RecordListResponse(List<Item> items) {
     }
   }
 
-  /** 리스트 뷰용 곡 요약 (artwork만, preview/external_links 없음). */
-  public record Track(String title, String artist, String artworkUrl) {
+  /** 리스트 뷰용 곡 요약 (external_links 없음). */
+  public record Track(String title, String artist, String artworkUrl, String previewUrl) {
 
     public static Track from(Song song) {
-      return new Track(song.getTrackName(), song.getArtistName(), song.getArtworkUrl());
+      return new Track(
+          song.getTrackName(), song.getArtistName(), song.getArtworkUrl(), song.getPreviewUrl());
     }
   }
 }
