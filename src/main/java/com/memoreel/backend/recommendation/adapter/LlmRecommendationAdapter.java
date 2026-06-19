@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class LlmRecommendationAdapter implements RecommendationPort {
 
+  private static final int MAX_KEYWORDS = 3;
+
   private final LlmPort llmPort;
   private final KeywordRepository keywordRepository;
   private final SongResolver songResolver;
@@ -32,7 +34,8 @@ public class LlmRecommendationAdapter implements RecommendationPort {
   public Recommendation recommend(
       String photoUrl, LocalDateTime takenAt, BigDecimal lat, BigDecimal lng) {
     LlmAnalysis analysis = llmPort.analyzePhoto(photoUrl);
-    List<Keyword> keywords = keywordRepository.findByNameIn(analysis.keywordNames());
+    List<String> keywordNames = analysis.keywordNames().stream().limit(MAX_KEYWORDS).toList();
+    List<Keyword> keywords = keywordRepository.findByNameIn(keywordNames);
     List<RecommendedTrack> tracks = songResolver.resolve(analysis.candidates());
     return new Recommendation(analysis.description(), keywords, tracks);
   }
