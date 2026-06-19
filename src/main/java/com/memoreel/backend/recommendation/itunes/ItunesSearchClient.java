@@ -3,6 +3,8 @@ package com.memoreel.backend.recommendation.itunes;
 import com.memoreel.backend.recommendation.port.RecommendedTrack;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -10,6 +12,7 @@ import org.springframework.web.client.RestClient;
 @Component
 public class ItunesSearchClient {
 
+  private static final Logger log = LoggerFactory.getLogger(ItunesSearchClient.class);
   private static final int PREVIEW_DURATION_SEC = 30;
 
   private final RestClient itunesRestClient;
@@ -47,6 +50,7 @@ public class ItunesSearchClient {
       }
       return Optional.of(toRecommendedTrack(results.get(0)));
     } catch (RuntimeException e) {
+      log.warn("iTunes 검색 실패: title={}, artist={}, message={}", title, artist, e.getMessage());
       return Optional.empty();
     }
   }

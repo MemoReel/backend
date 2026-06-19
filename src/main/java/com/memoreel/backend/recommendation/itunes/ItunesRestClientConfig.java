@@ -1,7 +1,9 @@
 package com.memoreel.backend.recommendation.itunes;
 
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.json.JsonMapper;
@@ -21,11 +23,14 @@ public class ItunesRestClientConfig {
   @Bean
   public RestClient itunesRestClient() {
     JsonMapper plainJsonMapper = JsonMapper.builder().build();
+    JacksonJsonHttpMessageConverter jsonConverter =
+        new JacksonJsonHttpMessageConverter(plainJsonMapper);
+    // iTunes Search API는 Content-Type을 application/json이 아닌 text/javascript로 내려준다.
+    jsonConverter.setSupportedMediaTypes(
+        List.of(MediaType.APPLICATION_JSON, new MediaType("text", "javascript")));
     return RestClient.builder()
         .baseUrl(BASE_URL)
-        .configureMessageConverters(
-            builder ->
-                builder.withJsonConverter(new JacksonJsonHttpMessageConverter(plainJsonMapper)))
+        .configureMessageConverters(builder -> builder.withJsonConverter(jsonConverter))
         .build();
   }
 }
