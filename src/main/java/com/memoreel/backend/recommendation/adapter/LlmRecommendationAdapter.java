@@ -2,7 +2,7 @@ package com.memoreel.backend.recommendation.adapter;
 
 import com.memoreel.backend.entity.Keyword;
 import com.memoreel.backend.keyword.KeywordRepository;
-import com.memoreel.backend.recommendation.SongResolver;
+import com.memoreel.backend.recommendation.TrackBackfillResolver;
 import com.memoreel.backend.recommendation.port.LlmAnalysis;
 import com.memoreel.backend.recommendation.port.LlmPort;
 import com.memoreel.backend.recommendation.port.Recommendation;
@@ -21,13 +21,15 @@ public class LlmRecommendationAdapter implements RecommendationPort {
 
   private final LlmPort llmPort;
   private final KeywordRepository keywordRepository;
-  private final SongResolver songResolver;
+  private final TrackBackfillResolver trackBackfillResolver;
 
   public LlmRecommendationAdapter(
-      LlmPort llmPort, KeywordRepository keywordRepository, SongResolver songResolver) {
+      LlmPort llmPort,
+      KeywordRepository keywordRepository,
+      TrackBackfillResolver trackBackfillResolver) {
     this.llmPort = llmPort;
     this.keywordRepository = keywordRepository;
-    this.songResolver = songResolver;
+    this.trackBackfillResolver = trackBackfillResolver;
   }
 
   @Override
@@ -36,7 +38,9 @@ public class LlmRecommendationAdapter implements RecommendationPort {
     LlmAnalysis analysis = llmPort.analyzePhoto(photoUrl);
     List<String> keywordNames = analysis.keywordNames().stream().limit(MAX_KEYWORDS).toList();
     List<Keyword> keywords = keywordRepository.findByNameIn(keywordNames);
-    List<RecommendedTrack> tracks = songResolver.resolve(analysis.candidates());
+    List<RecommendedTrack> tracks =
+        trackBackfillResolver.resolve(
+            analysis.description(), keywordNames, analysis.candidates(), List.of());
     return new Recommendation(analysis.description(), keywords, tracks);
   }
 }

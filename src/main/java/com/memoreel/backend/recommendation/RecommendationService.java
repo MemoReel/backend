@@ -27,19 +27,19 @@ public class RecommendationService {
   private final StoragePort storagePort;
   private final RecommendationPort recommendationPort;
   private final LlmPort llmPort;
-  private final SongResolver songResolver;
+  private final TrackBackfillResolver trackBackfillResolver;
 
   public RecommendationService(
       UserRepository userRepository,
       StoragePort storagePort,
       RecommendationPort recommendationPort,
       LlmPort llmPort,
-      SongResolver songResolver) {
+      TrackBackfillResolver trackBackfillResolver) {
     this.userRepository = userRepository;
     this.recommendationPort = recommendationPort;
     this.storagePort = storagePort;
     this.llmPort = llmPort;
-    this.songResolver = songResolver;
+    this.trackBackfillResolver = trackBackfillResolver;
   }
 
   public RecommendationResponse recommend(
@@ -66,7 +66,11 @@ public class RecommendationService {
     List<SongCandidate> candidates =
         llmPort.recommendSongs(request.description(), request.keywordNames(), excludeTracks);
     List<TrackResponse> tracks =
-        songResolver.resolve(candidates).stream().map(TrackResponse::from).toList();
+        trackBackfillResolver
+            .resolve(request.description(), request.keywordNames(), candidates, excludeTracks)
+            .stream()
+            .map(TrackResponse::from)
+            .toList();
     return new RecommendationRetryResponse(tracks);
   }
 

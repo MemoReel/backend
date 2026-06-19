@@ -9,6 +9,7 @@
 현재 추천 파이프라인은 `LlmPort` 인터페이스로 추상화되어 있고, 유일한 구현체 `StubLlmAdapter`가 고정된 description/키워드/곡 후보를 반환한다. 운영 배포를 위해 실제 LLM 호출이 필요하다.
 
 기존 인터페이스:
+
 - `LlmAnalysis analyzePhoto(String photoUrl)` — Stage 1, 사진 분석
 - `List<SongCandidate> recommendSongs(String description, List<String> keywordNames, List<SongCandidate> excludeTracks)` — Stage 2, 재추천(사진 재분석 없음)
 
@@ -16,16 +17,16 @@
 
 ## 2. 결정 사항 요약
 
-| 항목 | 결정 |
-|------|------|
-| API 호출 방식 | 공식 Java SDK `com.anthropic:anthropic-java` |
-| 모델 | `claude-sonnet-4-6` |
-| 사진 전달 | `StoragePort.viewUrl(key)`로 발급한 S3 presigned URL을 image URL로 전달 |
-| 응답 구조화 | tool use(function calling) 강제, `tool_choice = { type: "tool", name: ... }` |
-| 키워드 선정 | DB `Keyword` 전체 목록을 시스템 프롬프트에 주입하고 그 목록에서만 선택하도록 강제 |
-| 실패 폴백 | SDK 내장 재시도 이후에도 실패하면 5xx로 전파 (Stub 폴백 없음) |
-| 프로파일 분기 | `memoreel.llm.provider` 프로퍼티로 stub/claude 토글, 기본값 stub |
-| 키 관리 | `ANTHROPIC_API_KEY` 환경변수, yml에 평문 금지 |
+| 항목          | 결정                                                                              |
+| ------------- | --------------------------------------------------------------------------------- |
+| API 호출 방식 | 공식 Java SDK `com.anthropic:anthropic-java`                                      |
+| 모델          | `claude-sonnet-4-6`                                                               |
+| 사진 전달     | `StoragePort.viewUrl(key)`로 발급한 S3 presigned URL을 image URL로 전달           |
+| 응답 구조화   | tool use(function calling) 강제, `tool_choice = { type: "tool", name: ... }`      |
+| 키워드 선정   | DB `Keyword` 전체 목록을 시스템 프롬프트에 주입하고 그 목록에서만 선택하도록 강제 |
+| 실패 폴백     | SDK 내장 재시도 이후에도 실패하면 5xx로 전파 (Stub 폴백 없음)                     |
+| 프로파일 분기 | `memoreel.llm.provider` 프로퍼티로 stub/claude 토글, 기본값 stub                  |
+| 키 관리       | `ANTHROPIC_API_KEY` 환경변수, yml에 평문 금지                                     |
 
 ## 3. 아키텍처
 
@@ -59,7 +60,7 @@ recommendation/
 2. `KeywordRepository.findAll()`로 키워드 목록을 가져온다. 어댑터가 `@PostConstruct` 시점에 한 번 캐싱하고, 필요 시 단순 갱신 메서드를 두지 않는다(키워드 추가 빈도가 낮다는 가정). 운영 중 새 키워드 반영이 필요하면 어플리케이션 재시작으로 처리한다.
 3. Anthropic Messages API 호출:
    - `model`: `claude-sonnet-4-6`
-   - `system`: 키워드 목록과 출력 규칙을 명시 (한국어 description, 키워드는 목록 내에서 1~3개, 곡 후보는 정확히 5개)
+   - `system`: 키워드 목록과 출력 규칙을 명시 (한국어 description, 키워드는 목록 내에서 1~3개, 곡 후보는 정확히 10개)
    - `user`: `[ImageBlock(source=url, url=presignedUrl), TextBlock("이 사진을 분석해 분위기에 어울리는 곡을 추천해줘")]`
    - `tools`: `[analyze_photo 스키마]`
    - `tool_choice`: `{ type: "tool", name: "analyze_photo" }`
@@ -71,7 +72,7 @@ recommendation/
 
 1. Anthropic Messages API 호출:
    - `model`: `claude-sonnet-4-6`
-   - `system`: "주어진 description/키워드/제외 곡을 받아 분위기에 맞는 새로운 곡 5개를 추천하라. 제외 목록의 곡은 포함하지 말 것."
+   - `system`: "주어진 description/키워드/제외 곡을 받아 분위기에 맞는 새로운 곡 10개를 추천하라. 제외 목록의 곡은 포함하지 말 것."
    - `user`: description, keywordNames, excludeTracks(title+artist 목록)를 JSON 텍스트로 직렬화하여 전달
    - `tools`: `[recommend_songs 스키마]`
    - `tool_choice`: `{ type: "tool", name: "recommend_songs" }`
@@ -80,6 +81,7 @@ recommendation/
 ### Tool 스키마
 
 `analyze_photo` input:
+
 ```json
 {
   "type": "object",
@@ -94,13 +96,13 @@ recommendation/
     },
     "candidates": {
       "type": "array",
-      "minItems": 5,
-      "maxItems": 5,
+      "minItems": 10,
+      "maxItems": 10,
       "items": {
         "type": "object",
         "required": ["title", "artist"],
         "properties": {
-          "title":  { "type": "string" },
+          "title": { "type": "string" },
           "artist": { "type": "string" }
         }
       }
@@ -110,6 +112,7 @@ recommendation/
 ```
 
 `recommend_songs` input:
+
 ```json
 {
   "type": "object",
@@ -117,13 +120,13 @@ recommendation/
   "properties": {
     "candidates": {
       "type": "array",
-      "minItems": 5,
-      "maxItems": 5,
+      "minItems": 10,
+      "maxItems": 10,
       "items": {
         "type": "object",
         "required": ["title", "artist"],
         "properties": {
-          "title":  { "type": "string" },
+          "title": { "type": "string" },
           "artist": { "type": "string" }
         }
       }
@@ -137,25 +140,27 @@ recommendation/
 ## 5. 에러 처리
 
 ### SDK 설정
+
 - `maxRetries`: 2 (SDK 기본값. 429/5xx/네트워크는 자동 백오프 재시도)
 - `timeout`: 30초 (`Duration.ofSeconds(30)`)
 - 추가 수동 재시도는 두지 않는다.
 
 ### 예외 매핑
 
-| 발생 상황 | 매핑 |
-|----------|------|
-| SDK가 재시도 후에도 5xx/타임아웃/네트워크 오류 throw | `BusinessException(UPSTREAM_ERROR, "LLM 호출 실패", null)` → 502 |
-| SDK가 4xx(인증/요청 오류) throw | `BusinessException(UPSTREAM_ERROR, "LLM 호출 실패", null)` → 502 (운영자 알림 대상) |
-| 응답에 `tool_use` 블록 없음 | `BusinessException(AI_ANALYSIS_FAILED, "LLM 응답 형식 오류", null)` → 422 |
-| `tool_use.input` JSON 파싱 실패 | `BusinessException(AI_ANALYSIS_FAILED, "LLM 응답 형식 오류", null)` → 422 |
-| `candidates.size() == 0` | `BusinessException(AI_ANALYSIS_FAILED, "LLM 응답에 곡 후보 없음", null)` → 422 |
-| `candidates.size() < 5` | 그대로 사용 (이후 `SongResolver`가 iTunes 매칭으로 처리, 명세상 최대 5개 제한 존재) |
-| `keyword_names`에 DB 미존재 값 포함 | 그대로 반환 (`KeywordRepository.findByNameIn`이 자연 필터링) |
+| 발생 상황                                            | 매핑                                                                                       |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| SDK가 재시도 후에도 5xx/타임아웃/네트워크 오류 throw | `BusinessException(UPSTREAM_ERROR, "LLM 호출 실패", null)` → 502                           |
+| SDK가 4xx(인증/요청 오류) throw                      | `BusinessException(UPSTREAM_ERROR, "LLM 호출 실패", null)` → 502 (운영자 알림 대상)        |
+| 응답에 `tool_use` 블록 없음                          | `BusinessException(AI_ANALYSIS_FAILED, "LLM 응답 형식 오류", null)` → 422                  |
+| `tool_use.input` JSON 파싱 실패                      | `BusinessException(AI_ANALYSIS_FAILED, "LLM 응답 형식 오류", null)` → 422                  |
+| `candidates.size() == 0`                             | `BusinessException(AI_ANALYSIS_FAILED, "LLM 응답에 곡 후보 없음", null)` → 422             |
+| `candidates.size() < 10`                             | 그대로 사용 (호출자인 `TrackBackfillResolver`가 iTunes 매칭 + 부족 시 재호출로 5곡을 채움) |
+| `keyword_names`에 DB 미존재 값 포함                  | 그대로 반환 (`KeywordRepository.findByNameIn`이 자연 필터링)                               |
 
 `ErrorCode`는 기존 `UPSTREAM_ERROR`(502)와 `AI_ANALYSIS_FAILED`(422)를 사용한다. 신규 코드 추가 없음.
 
 ### 로깅
+
 - 실패 시: `log.warn("Claude 호출 실패: stage={}, message={}", stage, e.getMessage())`
 - 스택트레이스는 debug 레벨에서만.
 - 응답 본문/입력 이미지 URL은 PII 위험 있으므로 debug 레벨에서만 노출.
@@ -163,6 +168,7 @@ recommendation/
 ## 6. 설정과 프로파일
 
 ### `application.yml` (기본값)
+
 ```yaml
 memoreel:
   llm:
@@ -176,6 +182,7 @@ memoreel:
 ```
 
 ### `application-prod.yml` (운영에서 override)
+
 ```yaml
 memoreel:
   llm:
@@ -183,6 +190,7 @@ memoreel:
 ```
 
 ### 빈 등록 조건
+
 - `StubLlmAdapter`: `@ConditionalOnProperty(name = "memoreel.llm.provider", havingValue = "stub", matchIfMissing = true)`
 - `ClaudeLlmAdapter`: `@ConditionalOnProperty(name = "memoreel.llm.provider", havingValue = "claude")`
 - `ClaudeClientConfig`(= `AnthropicClient` 빈): `@ConditionalOnProperty(name = "memoreel.llm.provider", havingValue = "claude")`
@@ -190,6 +198,7 @@ memoreel:
 `provider=stub`(default)에서는 `ANTHROPIC_API_KEY`가 없어도 부팅 가능하다.
 
 ### `ClaudeProperties` (record)
+
 ```java
 @ConfigurationProperties("memoreel.llm.claude")
 public record ClaudeProperties(
@@ -204,13 +213,13 @@ public record ClaudeProperties(
 
 ## 7. 테스팅
 
-| 레벨 | 대상 | 방식 |
-|------|------|------|
-| Unit | `ClaudeLlmAdapter` | `AnthropicClient`를 Mockito로 mock. 정상/누락/잘못된 tool_use 응답을 주입해 매핑·예외 매핑 검증 |
-| Unit | `ClaudeResponseParser` | 순수 함수 단위 테스트 (정상, 빈 candidates, 누락 필드 등) |
-| Unit | `ClaudePromptBuilder` | 키워드 목록 주입, exclude 직렬화 등 |
-| 기존 Integration | `RecommendationServiceTest` 등 | `provider=stub`(default) 그대로 동작, 변경 없음 |
-| Manual | 실제 Claude 호출 검증 | `ANTHROPIC_API_KEY` 설정 + `--memoreel.llm.provider=claude` 플래그로 `./gradlew bootRun` |
+| 레벨             | 대상                           | 방식                                                                                            |
+| ---------------- | ------------------------------ | ----------------------------------------------------------------------------------------------- |
+| Unit             | `ClaudeLlmAdapter`             | `AnthropicClient`를 Mockito로 mock. 정상/누락/잘못된 tool_use 응답을 주입해 매핑·예외 매핑 검증 |
+| Unit             | `ClaudeResponseParser`         | 순수 함수 단위 테스트 (정상, 빈 candidates, 누락 필드 등)                                       |
+| Unit             | `ClaudePromptBuilder`          | 키워드 목록 주입, exclude 직렬화 등                                                             |
+| 기존 Integration | `RecommendationServiceTest` 등 | `provider=stub`(default) 그대로 동작, 변경 없음                                                 |
+| Manual           | 실제 Claude 호출 검증          | `ANTHROPIC_API_KEY` 설정 + `--memoreel.llm.provider=claude` 플래그로 `./gradlew bootRun`        |
 
 `ArchUnit`: `ClaudeLlmAdapter`는 `recommendation.adapter` 패키지에 위치하므로 기존 규칙에 위반되지 않는다. 새 규칙 불필요.
 
@@ -226,6 +235,7 @@ public record ClaudeProperties(
 ## 9. 변경되는/추가되는 파일
 
 추가:
+
 - `recommendation/adapter/ClaudeLlmAdapter.java`
 - `recommendation/adapter/claude/ClaudePromptBuilder.java`
 - `recommendation/adapter/claude/ClaudeToolSchemas.java`
@@ -236,15 +246,19 @@ public record ClaudeProperties(
 - 테스트: `ClaudeLlmAdapterTest`, `ClaudeResponseParserTest`, `ClaudePromptBuilderTest`
 
 수정:
+
 - `build.gradle` — `com.anthropic:anthropic-java` 의존성 추가
 - `application.yml` — `memoreel.llm.*` 설정 블록 추가
 - `StubLlmAdapter.java` — `@Component`에 `@ConditionalOnProperty(... havingValue="stub", matchIfMissing=true)` 추가
 
 변경 없음:
+
 - `LlmPort`, `LlmAnalysis`, `SongCandidate`
 - `LlmRecommendationAdapter`, `RecommendationService`
 - `StoragePort`, `S3StorageAdapter`
 - `ErrorCode`(기존 코드 재사용)
+
+> 위 "변경 없음" 항목 중 `LlmRecommendationAdapter`/`RecommendationService`는 본 설계(Claude 어댑터 도입) 기준이다. 이슈 #41(LLM 10개 요청 + 부족 시 보충 재호출)에서 `TrackBackfillResolver`를 추가하면서 이미 수정되었으니, `ClaudeLlmAdapter` 구현 시점에는 그 변경 이후의 코드를 기준으로 작업한다.
 
 ## 10. 비범위 (Out of Scope)
 

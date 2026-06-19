@@ -22,7 +22,12 @@ public class StubLlmAdapter implements LlmPort {
           new SongCandidate("Sweater Weather", "The Neighbourhood"),
           new SongCandidate("Daylight", "Taylor Swift"),
           new SongCandidate("Yellow", "Coldplay"),
-          new SongCandidate("Riptide", "Vance Joy"));
+          new SongCandidate("Riptide", "Vance Joy"),
+          new SongCandidate("Sunset Lover", "Petit Biscuit"),
+          new SongCandidate("Ocean Eyes", "Billie Eilish"),
+          new SongCandidate("Slow Dancing in the Dark", "Joji"),
+          new SongCandidate("Sunday Best", "Surfaces"),
+          new SongCandidate("Cherry Wine", "Hozier"));
 
   private static final List<SongCandidate> STAGE2_CANDIDATES =
       List.of(
@@ -30,7 +35,12 @@ public class StubLlmAdapter implements LlmPort {
           new SongCandidate("Stay", "The Kid LAROI"),
           new SongCandidate("Sunroof", "Nicky Youre"),
           new SongCandidate("Adventure of a Lifetime", "Coldplay"),
-          new SongCandidate("Electric Feel", "MGMT"));
+          new SongCandidate("Electric Feel", "MGMT"),
+          new SongCandidate("Best Part", "Daniel Caesar"),
+          new SongCandidate("Liability", "Lorde"),
+          new SongCandidate("Falling", "Harry Styles"),
+          new SongCandidate("Lover, You Should've Come Over", "Jeff Buckley"),
+          new SongCandidate("Holocene", "Bon Iver"));
 
   @Override
   public LlmAnalysis analyzePhoto(String photoUrl) {
