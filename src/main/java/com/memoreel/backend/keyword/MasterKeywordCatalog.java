@@ -15,7 +15,9 @@ public final class MasterKeywordCatalog {
       Collections.unmodifiableSet(
           new LinkedHashSet<>(
               java.util.List.of(
-                  "노을", "비", "새벽", "카페", "드라이브", "잔잔함", "신남", "운동", "잠들기 전", "여행", "출근길", "감성")));
+                  "노을", "비", "새벽", "카페", "드라이브", "잔잔함", "신남", "운동", "잠들기 전", "여행", "출근길", "감성", "봄",
+                  "여름", "가을", "겨울", "눈", "벚꽃", "바다", "산책", "공부", "휴식", "파티", "혼자", "친구", "사랑", "이별",
+                  "그리움", "설렘", "위로")));
 
   private MasterKeywordCatalog() {}
 }
