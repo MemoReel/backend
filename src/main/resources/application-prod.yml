@@ -21,3 +21,5 @@ memoreel:
     s3:
       bucket: ${MEMOREEL_STORAGE_S3_BUCKET:memoreel-prod}
       region: ${MEMOREEL_STORAGE_S3_REGION:ap-northeast-2}
+  llm:
+    provider: claude
