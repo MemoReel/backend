@@ -41,7 +41,7 @@ public record RecordResponse(
 
     public static Track from(Song song) {
       return new Track(
-          song.getItunesTrackId(),
+          "itunes:" + song.getItunesTrackId(),
           song.getTrackName(),
           song.getArtistName(),
           song.getArtworkUrl(),
