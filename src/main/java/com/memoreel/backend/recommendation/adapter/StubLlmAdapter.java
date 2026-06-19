@@ -4,14 +4,15 @@ import com.memoreel.backend.recommendation.port.LlmAnalysis;
 import com.memoreel.backend.recommendation.port.LlmPort;
 import com.memoreel.backend.recommendation.port.SongCandidate;
 import java.util.List;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * 실제 Claude Sonnet 호출 도입 전 사용하는 기본 구현. Stage 1/2 모두 고정된 결과를 반환한다.
- *
- * <p>실제 LLM 어댑터(Claude Sonnet, vision + text) 도입 시 {@code @Primary}로 덮어쓴다.
+ * 고정된 결과를 반환하는 기본 구현. {@code memoreel.llm.provider=stub}(기본값)일 때 등록되어 운영 환경 이외에서 사용된다. 운영(prod
+ * 등)에서는 {@code provider=claude}로 전환하여 {@link ClaudeLlmAdapter}가 대신 등록된다.
  */
 @Component
+@ConditionalOnProperty(name = "memoreel.llm.provider", havingValue = "stub", matchIfMissing = true)
 public class StubLlmAdapter implements LlmPort {
 
   private static final List<String> FIXED_KEYWORDS = List.of("노을", "여행", "잔잔함");

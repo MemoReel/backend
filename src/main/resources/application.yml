@@ -13,3 +13,13 @@ spring:
     multipart:
       max-file-size: 15MB
       max-request-size: 20MB
+
+memoreel:
+  llm:
+    provider: stub
+    claude:
+      api-key: ${ANTHROPIC_API_KEY:}
+      model: claude-sonnet-4-6
+      max-tokens: 1024
+      timeout-seconds: 30
+      max-retries: 2
