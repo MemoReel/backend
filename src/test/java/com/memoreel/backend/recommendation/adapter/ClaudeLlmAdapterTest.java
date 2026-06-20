@@ -11,7 +11,6 @@ import com.anthropic.errors.AnthropicException;
 import com.anthropic.models.messages.Message;
 import com.anthropic.models.messages.MessageCreateParams;
 import com.anthropic.services.blocking.MessageService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.memoreel.backend.common.error.BusinessException;
 import com.memoreel.backend.common.error.ErrorCode;
 import com.memoreel.backend.entity.Keyword;
@@ -25,6 +24,7 @@ import com.memoreel.backend.recommendation.port.StoragePort;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
 
 class ClaudeLlmAdapterTest {
 
