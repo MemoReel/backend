@@ -2,7 +2,6 @@ package com.memoreel.backend.recommendation.config;
 
 import com.anthropic.client.AnthropicClient;
 import com.anthropic.client.okhttp.AnthropicOkHttpClient;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.memoreel.backend.recommendation.adapter.claude.ClaudePromptBuilder;
 import com.memoreel.backend.recommendation.adapter.claude.ClaudeProperties;
 import com.memoreel.backend.recommendation.adapter.claude.ClaudeResponseParser;
@@ -11,6 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import tools.jackson.databind.ObjectMapper;
 
 /** {@code memoreel.llm.provider=claude}일 때만 활성화되는 Anthropic 클라이언트 빈 설정. */
 @Configuration

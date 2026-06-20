@@ -4,14 +4,14 @@ import com.anthropic.models.messages.ContentBlockParam;
 import com.anthropic.models.messages.ImageBlockParam;
 import com.anthropic.models.messages.MessageParam;
 import com.anthropic.models.messages.TextBlockParam;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.memoreel.backend.common.error.BusinessException;
 import com.memoreel.backend.common.error.ErrorCode;
 import com.memoreel.backend.recommendation.port.SongCandidate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /** Claude 메시지 페이로드 조립 (스펙 §4). 키워드 목록은 외부에서 주입 후 시스템 프롬프트에 포함된다. */
 public class ClaudePromptBuilder {
@@ -73,7 +73,7 @@ public class ClaudePromptBuilder {
     String json;
     try {
       json = objectMapper.writeValueAsString(payload);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new BusinessException(ErrorCode.INTERNAL_ERROR, "추천 요청 직렬화 실패", null);
     }
     return MessageParam.builder().role(MessageParam.Role.USER).content(json).build();
