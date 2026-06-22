@@ -33,7 +33,7 @@ public class ClaudePromptBuilder {
         규칙:
         - description: 사진의 분위기와 풍경을 한국어로 1~2문장 묘사한다.
         - keyword_names: 다음 목록에서만 1개 이상 3개 이하 선택한다. 목록 밖의 단어는 사용하지 않는다. [%s]
-        - candidates: title/artist 쌍의 곡을 정확히 10개 제시한다. 분위기와 어울리는 다양한 곡을 고른다.
+        - candidates: title/artist 쌍의 곡을 정확히 20개 제시한다. 분위기와 어울리는 다양한 곡을 고른다.
         """
         .formatted(joined);
   }
@@ -45,7 +45,7 @@ public class ClaudePromptBuilder {
         반드시 recommend_songs tool을 호출해 응답해야 한다.
         규칙:
         - excluded 목록의 곡(title+artist)은 절대 포함하지 않는다.
-        - candidates: title/artist 쌍의 새 곡을 정확히 10개 제시한다.
+        - candidates: title/artist 쌍의 새 곡을 정확히 20개 제시한다.
         """;
   }
 
