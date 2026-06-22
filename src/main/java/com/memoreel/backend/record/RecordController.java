@@ -2,6 +2,7 @@ package com.memoreel.backend.record;
 
 import com.memoreel.backend.common.response.ApiResponse;
 import com.memoreel.backend.common.web.DeviceId;
+import com.memoreel.backend.record.dto.MemoUpsertRequest;
 import com.memoreel.backend.record.dto.RecordCreateRequest;
 import com.memoreel.backend.record.dto.RecordListResponse;
 import com.memoreel.backend.record.dto.RecordResponse;
@@ -42,5 +43,14 @@ public class RecordController {
   public ApiResponse<RecordResponse> detail(
       @DeviceId String deviceId, @PathVariable Long recordId) {
     return ApiResponse.success(recordService.detail(deviceId, recordId));
+  }
+
+  /** 한 줄 일기(memo)를 작성하거나 기존 내용을 수정한다. 같은 endpoint로 upsert. */
+  @PostMapping("/records/{recordId}/memo")
+  public ApiResponse<RecordResponse> upsertMemo(
+      @DeviceId String deviceId,
+      @PathVariable Long recordId,
+      @Valid @RequestBody MemoUpsertRequest request) {
+    return ApiResponse.success(recordService.upsertMemo(deviceId, recordId, request));
   }
 }

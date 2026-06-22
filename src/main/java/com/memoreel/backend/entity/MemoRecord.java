@@ -48,6 +48,9 @@ public class MemoRecord extends BaseTimeEntity {
   @Column(name = "location_label")
   private String locationLabel;
 
+  @Column(name = "memo_text", length = 500)
+  private String memoText;
+
   @Builder
   public MemoRecord(
       User user,
@@ -62,5 +65,9 @@ public class MemoRecord extends BaseTimeEntity {
     this.locationLat = locationLat;
     this.locationLng = locationLng;
     this.locationLabel = locationLabel;
+  }
+
+  public void updateMemoText(String memoText) {
+    this.memoText = memoText;
   }
 }

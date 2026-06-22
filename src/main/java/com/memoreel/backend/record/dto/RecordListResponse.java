@@ -17,7 +17,8 @@ public record RecordListResponse(List<Item> items) {
       String photoViewUrl,
       Track track,
       List<KeywordRef> keywords,
-      boolean hasLocation) {
+      boolean hasLocation,
+      String memoText) {
 
     public static Item of(MemoRecord record, List<Keyword> keywords, String photoViewUrl) {
       return new Item(
@@ -27,7 +28,8 @@ public record RecordListResponse(List<Item> items) {
           photoViewUrl,
           Track.from(record.getSong()),
           keywords.stream().map(KeywordRef::from).toList(),
-          record.getLocationLat() != null || record.getLocationLng() != null);
+          record.getLocationLat() != null || record.getLocationLng() != null,
+          record.getMemoText());
     }
   }
 
