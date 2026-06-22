@@ -14,7 +14,6 @@ public class ItunesSearchClient {
 
   private static final Logger log = LoggerFactory.getLogger(ItunesSearchClient.class);
   private static final int PREVIEW_DURATION_SEC = 30;
-  private static final String COUNTRY = "KR";
 
   private final RestClient itunesRestClient;
 
@@ -40,7 +39,6 @@ public class ItunesSearchClient {
                           .queryParam("term", term)
                           .queryParam("media", "music")
                           .queryParam("entity", "song")
-                          .queryParam("country", COUNTRY)
                           .queryParam("limit", 1)
                           .build())
               .retrieve()
