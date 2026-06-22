@@ -11,6 +11,7 @@ import com.memoreel.backend.keyword.KeywordRepository;
 import com.memoreel.backend.keyword.RecordKeywordRepository;
 import com.memoreel.backend.recommendation.port.StoragePort;
 import com.memoreel.backend.recommendation.port.StoredPhoto;
+import com.memoreel.backend.record.dto.MemoUpsertRequest;
 import com.memoreel.backend.record.dto.RecordCreateRequest;
 import com.memoreel.backend.record.dto.RecordListResponse;
 import com.memoreel.backend.record.dto.RecordResponse;
@@ -89,6 +90,19 @@ public class RecordService {
             Collectors.groupingBy(
                 rk -> rk.getRecord().getId(),
                 Collectors.mapping(RecordKeyword::getKeyword, Collectors.toList())));
+  }
+
+  /** 한 줄 일기(memo)를 작성하거나 기존 내용을 수정한다. 같은 endpoint로 upsert. */
+  public RecordResponse upsertMemo(String deviceId, Long recordId, MemoUpsertRequest request) {
+    User user = requireUser(deviceId);
+    MemoRecord record =
+        memoRecordRepository
+            .findByIdAndUserWithSong(recordId, user)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    record.updateMemoText(request.memoText());
+    List<Keyword> keywords =
+        loadKeywordsBatch(List.of(record)).getOrDefault(record.getId(), List.of());
+    return RecordResponse.of(record, keywords, storagePort.viewUrl(record.getPhotoUrl()));
   }
 
   public RecordResponse create(String deviceId, RecordCreateRequest request) {

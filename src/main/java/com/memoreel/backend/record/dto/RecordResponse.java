@@ -17,7 +17,8 @@ public record RecordResponse(
     String photoViewUrl,
     Track track,
     List<KeywordRef> keywords,
-    Location location) {
+    Location location,
+    String memoText) {
 
   public static RecordResponse of(MemoRecord record, List<Keyword> keywords, String photoViewUrl) {
     return new RecordResponse(
@@ -27,7 +28,8 @@ public record RecordResponse(
         photoViewUrl,
         Track.from(record.getSong()),
         keywords.stream().map(KeywordRef::from).toList(),
-        Location.from(record));
+        Location.from(record),
+        record.getMemoText());
   }
 
   /** 응답에 포함되는 곡 DTO. */
