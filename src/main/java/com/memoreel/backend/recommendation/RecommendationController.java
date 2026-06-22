@@ -24,7 +24,10 @@ public class RecommendationController {
     this.recommendationService = recommendationService;
   }
 
-  /** 사진 1장으로 매칭된 키워드와 5곡의 추천 트랙을 응답한다 (명세 §3-1). 저장은 별도 엔드포인트({@code POST /records})에서 수행한다. */
+  /**
+   * 사진 1장으로 매칭된 키워드와 추천 트랙(매칭된 만큼, 최대 20곡)을 응답한다 (명세 §3-1). 저장은 별도 엔드포인트({@code POST /records})에서
+   * 수행한다.
+   */
   @PostMapping(path = "/recommendations", consumes = "multipart/form-data")
   public ApiResponse<RecommendationResponse> recommend(
       @DeviceId String deviceId,
@@ -37,7 +40,7 @@ public class RecommendationController {
     return ApiResponse.success(recommendationService.recommend(deviceId, file, takenAt, lat, lng));
   }
 
-  /** 사진 재분석 없이 description/keywords를 재사용해 다른 5곡을 추천한다 (명세 §3 재추천). */
+  /** 사진 재분석 없이 description/keywords를 재사용해 다른 트랙(매칭된 만큼, 최대 20곡)을 추천한다 (명세 §3 재추천). */
   @PostMapping("/recommendations/retry")
   public ApiResponse<RecommendationRetryResponse> retry(
       @DeviceId String deviceId, @Valid @RequestBody RecommendationRetryRequest request) {

@@ -19,7 +19,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-/** 사진 한 장으로 추천 5곡 + 매칭 키워드를 응답한다 (명세 §3-1). 이번 단계에서는 DB 저장이 없다. */
+/** 사진 한 장으로 추천 트랙(매칭된 만큼, 최대 20곡) + 매칭 키워드를 응답한다 (명세 §3-1). 이번 단계에서는 DB 저장이 없다. */
 @Service
 public class RecommendationService {
 
@@ -53,7 +53,7 @@ public class RecommendationService {
     return RecommendationResponse.of(photo, recommendation);
   }
 
-  /** 사진 재분석 없이 description/keywords를 재사용해 다른 5곡을 추천한다 (명세 §3 재추천). */
+  /** 사진 재분석 없이 description/keywords를 재사용해 다른 트랙(매칭된 만큼, 최대 20곡)을 추천한다 (명세 §3 재추천). */
   public RecommendationRetryResponse retry(String deviceId, RecommendationRetryRequest request) {
     requireRegisteredDevice(deviceId);
 
