@@ -19,7 +19,7 @@ memoreel:
     provider: stub
     claude:
       api-key: ${ANTHROPIC_API_KEY:}
-      model: claude-haiku-4-5
+      model: claude-sonnet-4-6
       max-tokens: 1024
       timeout-seconds: 30
       max-retries: 2
