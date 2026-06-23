@@ -138,14 +138,6 @@ public class RecordService {
   private Song upsertSong(RecordCreateRequest.Track track) {
     return songRepository
         .findByItunesTrackId(track.trackId())
-        .map(
-            existing -> {
-              if (memoRecordRepository.existsBySong(existing)) {
-                throw new BusinessException(
-                    ErrorCode.CONFLICT, "이미 동일한 곡으로 저장된 record가 있습니다.", null);
-              }
-              return existing;
-            })
         .orElseGet(
             () ->
                 songRepository.save(
