@@ -1,7 +1,7 @@
 # EC2 자동 배포 셋업 Runbook
 
 `scripts/auto-deploy.sh`를 EC2에서 cron으로 동작시키기 위한 1회성 준비 절차.
-대상: Ubuntu 22.04 LTS 이상, Docker / Docker Compose v2 설치 완료된 EC2 인스턴스.
+대상: Amazon Linux 2 / Amazon Linux 2023, Docker / Docker Compose v2 설치 완료된 EC2 인스턴스 (기본 사용자 `ec2-user`).
 
 설계 문서: `docs/superpowers/specs/2026-06-23-ec2-cron-auto-deploy-design.md`
 
@@ -17,8 +17,8 @@ flock --version           # util-linux 포함
 ## 1. 프로젝트 clone
 
 ```bash
-sudo mkdir -p /home/ubuntu
-cd /home/ubuntu
+sudo mkdir -p /home/ec2-user
+cd /home/ec2-user
 git clone https://github.com/MemoReel/backend.git
 cd backend
 ```
@@ -26,7 +26,7 @@ cd backend
 이미 clone되어 있다면:
 
 ```bash
-cd /home/ubuntu/backend
+cd /home/ec2-user/backend
 git remote -v        # origin이 올바른 리포지토리인지 확인
 git checkout main
 git pull --ff-only
@@ -34,10 +34,10 @@ git pull --ff-only
 
 ## 2. `.env` 파일 작성
 
-`/home/ubuntu/backend/.env`에 운영 환경변수를 작성한다. 키는 `docker-compose.yml`의 `environment:` 블록에서 참조하는 모든 항목.
+`/home/ec2-user/backend/.env`에 운영 환경변수를 작성한다. 키는 `docker-compose.yml`의 `environment:` 블록에서 참조하는 모든 항목.
 
 ```bash
-cat > /home/ubuntu/backend/.env <<'EOF'
+cat > /home/ec2-user/backend/.env <<'EOF'
 SPRING_PROFILES_ACTIVE=prod
 SERVER_PORT=8080
 DB_URL=jdbc:mysql://<RDS_ENDPOINT>:3306/<DB_NAME>
@@ -50,17 +50,17 @@ MEMOREEL_STORAGE_S3_BUCKET=<BUCKET>
 MEMOREEL_STORAGE_S3_REGION=ap-northeast-2
 ANTHROPIC_API_KEY=<KEY>
 EOF
-chmod 600 /home/ubuntu/backend/.env
+chmod 600 /home/ec2-user/backend/.env
 ```
 
 > `.env`는 git 비추적. 절대 커밋하지 말 것.
 
 ## 3. docker 그룹 권한
 
-`ubuntu` 사용자가 sudo 없이 docker를 실행할 수 있어야 cron이 정상 동작한다.
+`ec2-user` 사용자가 sudo 없이 docker를 실행할 수 있어야 cron이 정상 동작한다.
 
 ```bash
-sudo usermod -aG docker ubuntu
+sudo usermod -aG docker ec2-user
 ```
 
 적용을 위해 한 번 로그아웃 후 재로그인. 확인:
@@ -73,7 +73,7 @@ docker ps    # 에러 없이 컨테이너 목록이 떠야 함
 
 ```bash
 sudo mkdir -p /var/log/memoreel
-sudo chown ubuntu:ubuntu /var/log/memoreel
+sudo chown ec2-user:ec2-user /var/log/memoreel
 ```
 
 ## 5. (권장) Swap 구성
@@ -92,7 +92,7 @@ free -h    # Swap 행에 2.0Gi 표시 확인
 ## 6. 수동 1회 실행으로 검증
 
 ```bash
-cd /home/ubuntu/backend
+cd /home/ec2-user/backend
 ./scripts/auto-deploy.sh
 ```
 
@@ -115,7 +115,7 @@ crontab -e
 다음 한 줄을 추가:
 
 ```cron
-*/5 * * * * /home/ubuntu/backend/scripts/auto-deploy.sh >> /var/log/memoreel/auto-deploy.log 2>&1
+*/5 * * * * /home/ec2-user/backend/scripts/auto-deploy.sh >> /var/log/memoreel/auto-deploy.log 2>&1
 ```
 
 확인:
@@ -172,7 +172,7 @@ crontab -e    # 해당 라인 주석 처리
 특정 SHA로 강제 고정:
 
 ```bash
-cd /home/ubuntu/backend
+cd /home/ec2-user/backend
 git reset --hard <sha>
 docker compose down
 docker compose build --no-cache app

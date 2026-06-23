@@ -8,7 +8,7 @@ set -euo pipefail
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-PROJECT_DIR="/home/ubuntu/backend"
+PROJECT_DIR="/home/ec2-user/backend"
 LOCK_FILE="/tmp/memoreel-auto-deploy.lock"
 
 log() {
