@@ -14,6 +14,7 @@ public record SavedTrackResponse(
     String title,
     String artist,
     String artworkUrl,
+    String previewUrl,
     ExternalLinks externalLinks,
     Long sourceRecordId,
     LocalDateTime savedAt) {
@@ -25,6 +26,7 @@ public record SavedTrackResponse(
         song.getTrackName(),
         song.getArtistName(),
         song.getArtworkUrl(),
+        song.getPreviewUrl(),
         ExternalLinks.of(song.getTrackName(), song.getArtistName()),
         record.getId(),
         record.getCreatedAt());

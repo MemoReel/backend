@@ -33,7 +33,7 @@ public class MemoRecord extends BaseTimeEntity {
   private User user;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "song_id", nullable = false, unique = true)
+  @JoinColumn(name = "song_id", nullable = false)
   private Song song;
 
   @Column(name = "photo_url", nullable = false, length = 512)

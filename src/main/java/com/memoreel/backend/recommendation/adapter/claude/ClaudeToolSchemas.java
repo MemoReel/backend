@@ -9,8 +9,8 @@ import java.util.Map;
  * Claude tool use 강제를 위한 두 tool 스키마 정의 (스펙 §4).
  *
  * <ul>
- *   <li>{@link #ANALYZE_PHOTO_TOOL_NAME} - Stage 1: description + keyword_names + candidates(20개)
- *   <li>{@link #RECOMMEND_SONGS_TOOL_NAME} - Stage 2: candidates(20개)
+ *   <li>{@link #ANALYZE_PHOTO_TOOL_NAME} - Stage 1: description + keyword_names + candidates(10개)
+ *   <li>{@link #RECOMMEND_SONGS_TOOL_NAME} - Stage 2: candidates(10개)
  * </ul>
  */
 public final class ClaudeToolSchemas {
@@ -18,7 +18,7 @@ public final class ClaudeToolSchemas {
   public static final String ANALYZE_PHOTO_TOOL_NAME = "analyze_photo";
   public static final String RECOMMEND_SONGS_TOOL_NAME = "recommend_songs";
 
-  private static final int CANDIDATES_SIZE = 20;
+  private static final int CANDIDATES_SIZE = 10;
   private static final int KEYWORDS_MIN = 1;
   private static final int KEYWORDS_MAX = 3;
 
@@ -71,7 +71,7 @@ public final class ClaudeToolSchemas {
             .build();
     return Tool.builder()
         .name(ANALYZE_PHOTO_TOOL_NAME)
-        .description("사진 분위기를 분석해 한국어 설명, 매칭 키워드(목록 내 1~3개), 곡 후보 20개를 반환한다.")
+        .description("사진 분위기를 분석해 한국어 설명, 매칭 키워드(목록 내 1~3개), 곡 후보 10개를 반환한다.")
         .inputSchema(schema)
         .build();
   }
@@ -85,7 +85,7 @@ public final class ClaudeToolSchemas {
         Tool.InputSchema.builder().properties(properties).required(List.of("candidates")).build();
     return Tool.builder()
         .name(RECOMMEND_SONGS_TOOL_NAME)
-        .description("주어진 분위기/키워드/제외 곡을 바탕으로 새 곡 후보 20개를 반환한다.")
+        .description("주어진 분위기/키워드/제외 곡을 바탕으로 새 곡 후보 10개를 반환한다.")
         .inputSchema(schema)
         .build();
   }

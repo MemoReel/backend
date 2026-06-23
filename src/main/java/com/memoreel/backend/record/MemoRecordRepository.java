@@ -1,7 +1,6 @@
 package com.memoreel.backend.record;
 
 import com.memoreel.backend.entity.MemoRecord;
-import com.memoreel.backend.entity.Song;
 import com.memoreel.backend.entity.User;
 import java.util.List;
 import java.util.Optional;
@@ -10,8 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface MemoRecordRepository extends JpaRepository<MemoRecord, Long> {
-
-  boolean existsBySong(Song song);
 
   /** 본인 record 최신순 + song 동시 fetch (N+1 회피). */
   @Query(
