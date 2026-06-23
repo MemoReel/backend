@@ -10,15 +10,15 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 /**
- * 첫 후보 묶음을 iTunes로 매칭한 뒤, 매칭 성공한 트랙이 목표치(20곡)에 못 미치면 LLM에 새 후보를 더 요청해서 채운다.
+ * 첫 후보 묶음을 iTunes로 매칭한 뒤, 매칭 성공한 트랙이 목표치(10곡)에 못 미치면 LLM에 새 후보를 더 요청해서 채운다.
  *
- * <p>매 호출마다 LLM은 정확히 20개 후보를 주는 것을 가정한다. 매칭에 성공한 트랙을 최대 {@link #TARGET_COUNT}개까지 그대로 모두 반환한다(프론트에서
+ * <p>매 호출마다 LLM은 정확히 10개 후보를 주는 것을 가정한다. 매칭에 성공한 트랙을 최대 {@link #TARGET_COUNT}개까지 그대로 모두 반환한다(프론트에서
  * 페이지 단위로 노출). 보충 요청은 최대 {@link #MAX_BACKFILL_ROUNDS}회까지만 하고, 그래도 부족하면 있는 만큼만 반환한다.
  */
 @Component
 public class TrackBackfillResolver {
 
-  private static final int TARGET_COUNT = 20;
+  private static final int TARGET_COUNT = 10;
   private static final int MAX_BACKFILL_ROUNDS = 2;
 
   private final LlmPort llmPort;
