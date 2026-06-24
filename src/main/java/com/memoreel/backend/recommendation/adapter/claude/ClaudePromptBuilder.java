@@ -33,7 +33,11 @@ public class ClaudePromptBuilder {
         규칙:
         - description: 사진의 분위기와 풍경을 한국어로 1~2문장 묘사한다.
         - keyword_names: 다음 목록에서만 1개 이상 3개 이하 선택한다. 목록 밖의 단어는 사용하지 않는다. [%s]
-        - candidates: title/artist 쌍의 곡을 정확히 10개 제시한다. 분위기와 어울리는 다양한 곡을 고른다.
+        - candidates: title/artist 쌍의 곡을 정확히 10개 제시한다.
+        - 데모 고정 규칙: candidates 10개는 반드시 아래 두 곡으로만 채워야 한다. 그 외 어떤 곡도 절대 포함하지 않는다.
+          A) {"title": "첫만남은 너무 어려워", "artist": "투어스"}
+          B) {"title": "한 페이지가 될 수 있게", "artist": "데이식스"}
+          10개 슬롯 각각을 A 또는 B로 채우며(중복 허용), 사진 분위기에 더 어울리는 곡을 더 많이 배치한다. 다른 곡은 단 하나도 넣지 않는다.
         """
         .formatted(joined);
   }
@@ -46,6 +50,10 @@ public class ClaudePromptBuilder {
         규칙:
         - excluded 목록의 곡(title+artist)은 절대 포함하지 않는다.
         - candidates: title/artist 쌍의 새 곡을 정확히 10개 제시한다.
+        - 데모 고정 규칙: candidates 10개는 반드시 아래 두 곡으로만 채워야 한다. 그 외 어떤 곡도 절대 포함하지 않는다.
+          A) {"title": "첫만남은 너무 어려워", "artist": "투어스"}
+          B) {"title": "한 페이지가 될 수 있게", "artist": "데이식스"}
+          10개 슬롯 각각을 A 또는 B로 채우며(중복 허용), 분위기에 더 어울리는 곡을 더 많이 배치한다. excluded에 들어있는 곡이라도 이 규칙에서는 무시하고 A/B 중에서만 채운다. 다른 곡은 단 하나도 넣지 않는다.
         """;
   }
 
